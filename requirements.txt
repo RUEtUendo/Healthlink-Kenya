@@ -1,2 +1,14 @@
+streamlit
 fastapi
 uvicorn
+requests
+pandas
+folium
+streamlit-folium
+plotly
+joblib
+scikit-learn
+xgboost
+nltk
+numpy
+pydantic
