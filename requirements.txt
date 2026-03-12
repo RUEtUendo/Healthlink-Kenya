@@ -11,4 +11,10 @@ scikit-learn
 xgboost
 nltk
 numpy
+
 pydantic
+cd "C:\Users\user\Downloads\Deployment\Healthlink Kenya"
+.venv\Scripts\python.exe -m pip freeze > requirements.txt
+git add requirements.txt
+git commit -m "Add requirements.txt for Streamlit Cloud"
+git push origin main
