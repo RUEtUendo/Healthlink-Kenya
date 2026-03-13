@@ -4,6 +4,9 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import plotly.graph_objects as go
+from datetime import datetime
+import hashlib
+import math
 
 # ============================================================
 # PAGE CONFIG
@@ -16,608 +19,1035 @@ st.set_page_config(
 )
 
 # ============================================================
-# DARK / LIGHT MODE
+# SESSION STATE DEFAULTS
 # ============================================================
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
+if "authenticated"  not in st.session_state: st.session_state.authenticated  = False
+if "user"           not in st.session_state: st.session_state.user           = {}
+if "theme"          not in st.session_state: st.session_state.theme          = "light"
+if "accent"         not in st.session_state: st.session_state.accent         = "#0B3D6E"
+if "font_size"      not in st.session_state: st.session_state.font_size      = "Medium"
+if "map_style"      not in st.session_state: st.session_state.map_style      = "CartoDB positron"
+if "show_paradox"   not in st.session_state: st.session_state.show_paradox   = True
+if "api_url"        not in st.session_state: st.session_state.api_url        = "http://127.0.0.1:8000"
 
 # ============================================================
-# THEME COLOURS
+# DYNAMIC THEME
 # ============================================================
-if st.session_state.dark_mode:
-    BG      = "#07111F"; SURFACE = "#0D1E30"; CARD    = "#102234"
-    BORDER  = "#1A3450"; TEXT    = "#D9E8F5"; MUTED   = "#5A7A99"
-    HEAD    = "#FFFFFF";  ACCENT  = "#00D9A3"; GOLD    = "#F5A623"
-    RED     = "#F87171"; SKY     = "#38BDF8"; PURPLE  = "#A78BFA"
-    BTN_TXT = "#07111F"; MAP_TILE= "CartoDB dark_matter"
-else:
-    BG      = "#F0F7F4"; SURFACE = "#FFFFFF"; CARD    = "#FFFFFF"
-    BORDER  = "#B8DCCF"; TEXT    = "#1A3A2A"; MUTED   = "#4A7A6A"
-    HEAD    = "#0A4A3A"; ACCENT  = "#007A5A"; GOLD    = "#C47A00"
-    RED     = "#B91C1C"; SKY     = "#0369A1"; PURPLE  = "#6D28D9"
-    BTN_TXT = "#FFFFFF"; MAP_TILE= "CartoDB positron"
+acc     = st.session_state.accent
+is_dark = st.session_state.theme == "dark"
+bg      = "#0D1117" if is_dark else "#F7F9FC"
+sbg     = "#161B22" if is_dark else "#FFFFFF"
+card    = "#1C2333" if is_dark else "#FFFFFF"
+border  = "#30363D" if is_dark else "#E2EAF4"
+text    = "#E6EDF3" if is_dark else "#1A2B40"
+muted   = "#8B949E" if is_dark else "#6B84A0"
+card_b  = "#1A2D4A" if is_dark else "#EEF5FF"
+card_g  = "#1A3A2A" if is_dark else "#EDFBF5"
+card_a  = "#3A2D10" if is_dark else "#FFFBEE"
+card_r  = "#3A1A1A" if is_dark else "#FFF5F5"
+bdr_b   = "#2D5490" if is_dark else "#C2D8F5"
+bdr_g   = "#2D7A5A" if is_dark else "#A8E6D0"
+bdr_a   = "#7A5A20" if is_dark else "#FDDDA0"
+bdr_r   = "#7A2D2D" if is_dark else "#FBCACA"
+TICK_COL= "#E6EDF3" if is_dark else "#1A1A2E"
+
+fs_map = {"Small": "11px", "Medium": "13px", "Large": "15px"}
+fs     = fs_map.get(st.session_state.font_size, "13px")
 
 # ============================================================
 # CSS
 # ============================================================
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    * {{ font-family: 'Inter', sans-serif; }}
-    .stApp {{ background-color: {BG}; color: {TEXT}; }}
-    section[data-testid="stSidebar"] {{ background-color: {SURFACE}; border-right: 2px solid {BORDER}; }}
-    h1, h2, h3, h4 {{ color: {HEAD} !important; }}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; font-size: {fs}; }}
+
+    .stApp {{ background-color: {bg}; color: {text}; }}
+    section[data-testid="stSidebar"] {{
+        background-color: {sbg};
+        border-right: 1px solid {border};
+        box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+    }}
+
+    h1 {{ color: {acc} !important; font-weight: 800 !important; }}
+    h2 {{ color: {acc} !important; font-weight: 700 !important; }}
+    h3, h4 {{ color: {text} !important; font-weight: 600 !important; }}
+    p, span, div {{ color: {text}; }}
+
     [data-testid="metric-container"] {{
-        background: {CARD}; border: 1.5px solid {BORDER};
-        border-radius: 14px; padding: 18px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        background: {card} !important;
+        border: 1.5px solid {border} !important;
+        border-radius: 14px !important;
+        padding: 20px 22px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
     }}
-    [data-testid="metric-container"] label {{ color: {MUTED} !important; font-size: 11px !important; text-transform: uppercase; letter-spacing: 0.06em; }}
-    [data-testid="metric-container"] [data-testid="stMetricValue"] {{ color: {ACCENT} !important; font-size: 26px !important; font-weight: 700 !important; }}
+    [data-testid="metric-container"] label {{
+        color: {muted} !important; font-size: 11px !important;
+        text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700 !important;
+    }}
+    [data-testid="metric-container"] [data-testid="stMetricValue"] {{
+        color: {acc} !important; font-size: 28px !important; font-weight: 900 !important;
+    }}
+    [data-testid="metric-container"] [data-testid="stMetricDelta"] {{
+        color: #16A34A !important; font-weight: 600 !important;
+    }}
+
     .stButton > button {{
-        background: {ACCENT} !important; color: {BTN_TXT} !important;
-        border: none !important; border-radius: 10px !important;
-        font-weight: 700 !important; padding: 10px 24px !important; font-size: 14px !important;
+        background: {acc} !important; color: #FFFFFF !important;
+        border: none !important; border-radius: 8px !important;
+        font-weight: 700 !important; padding: 10px 28px !important;
+        letter-spacing: 0.02em; transition: all 0.2s ease;
     }}
-    .stButton > button:hover {{ opacity: 0.85 !important; }}
-    .call-btn {{
-        display: inline-block; background: {ACCENT}; color: {BTN_TXT} !important;
-        border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700;
-        text-decoration: none !important; margin-top: 4px;
+    .stButton > button:hover {{
+        filter: brightness(1.15) !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.20) !important;
     }}
-    .card {{ background: {CARD}; border: 1.5px solid {BORDER}; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }}
-    .card-accent {{ border-left: 4px solid {ACCENT}; }}
-    .card-gold   {{ border-left: 4px solid {GOLD}; }}
-    .card-red    {{ border-left: 4px solid {RED}; }}
-    .badge {{ display: inline-block; border-radius: 99px; padding: 2px 10px; font-size: 11px; font-weight: 700; margin-right: 4px; }}
-    .badge-green  {{ background: {ACCENT}22; color: {ACCENT}; border: 1px solid {ACCENT}44; }}
-    .badge-gold   {{ background: {GOLD}22;   color: {GOLD};   border: 1px solid {GOLD}44; }}
-    .badge-red    {{ background: {RED}22;    color: {RED};    border: 1px solid {RED}44; }}
-    .badge-sky    {{ background: {SKY}22;    color: {SKY};    border: 1px solid {SKY}44; }}
-    .badge-purple {{ background: {PURPLE}22; color: {PURPLE}; border: 1px solid {PURPLE}44; }}
-    .plain-box {{ background: {ACCENT}11; border: 1.5px solid {ACCENT}33; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; font-size: 14px; color: {TEXT}; line-height: 1.8; }}
-    .stProgress > div > div {{ background-color: {ACCENT} !important; }}
+
     .stSelectbox label, .stSlider label, .stRadio label,
-    .stTextArea label, .stSelectSlider label, .stTextInput label {{
-        color: {MUTED} !important; font-size: 12px !important; font-weight: 600 !important;
-        text-transform: uppercase; letter-spacing: 0.05em;
+    .stTextArea label, .stSelectSlider label, .stTextInput label,
+    .stNumberInput label {{
+        color: {muted} !important; font-size: 11px !important;
+        font-weight: 700 !important; text-transform: uppercase; letter-spacing: 0.05em;
     }}
-    hr {{ border-color: {BORDER}; }}
+    .stTextInput input, .stSelectbox > div > div, .stTextArea textarea {{
+        background: {card} !important; border: 1px solid {border} !important;
+        border-radius: 8px !important; color: {text} !important;
+    }}
+
+    .stRadio > div {{ gap: 3px; }}
+    .stRadio label {{
+        padding: 10px 14px !important; border-radius: 10px !important;
+        transition: background 0.15s; font-size: 13px !important;
+        font-weight: 500; color: {text} !important;
+    }}
+    .stRadio label:hover {{ background: {'#21262D' if is_dark else '#F0F4FA'} !important; }}
+
+    .med-card {{
+        background: {card}; border: 1.5px solid {border};
+        border-radius: 14px; padding: 18px 22px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px;
+    }}
+    .med-card-blue  {{ background:{card_b}; border:1.5px solid {bdr_b}; border-radius:14px; padding:16px 20px; margin-bottom:12px; }}
+    .med-card-green {{ background:{card_g}; border:1.5px solid {bdr_g}; border-radius:14px; padding:16px 20px; margin-bottom:12px; }}
+    .med-card-amber {{ background:{card_a}; border:1.5px solid {bdr_a}; border-radius:14px; padding:16px 20px; margin-bottom:12px; }}
+    .med-card-red   {{ background:{card_r}; border:1.5px solid {bdr_r}; border-radius:14px; padding:16px 20px; margin-bottom:12px; }}
+
+    .badge-green {{ background:#DCFCE7; color:#15803D; border-radius:99px; padding:3px 12px; font-size:11px; font-weight:700; }}
+    .badge-amber {{ background:#FEF9C3; color:#A16207; border-radius:99px; padding:3px 12px; font-size:11px; font-weight:700; }}
+    .badge-red   {{ background:#FEE2E2; color:#DC2626; border-radius:99px; padding:3px 12px; font-size:11px; font-weight:700; }}
+    .badge-blue  {{ background:#DBEAFE; color:#1D4ED8; border-radius:99px; padding:3px 12px; font-size:11px; font-weight:700; }}
+    .badge-grey  {{ background:#F1F5F9; color:#64748B; border-radius:99px; padding:3px 12px; font-size:11px; font-weight:700; }}
+
+    .pt-row {{ display:flex; justify-content:space-between; align-items:center;
+               padding:10px 0; border-bottom:1px solid {border}; font-size:13px; }}
+    .pt-label {{ color:{muted}; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }}
+    .pt-value {{ color:{text}; font-weight:600; }}
+
+    .login-card {{
+        background: {card}; border: 1.5px solid {border}; border-radius: 18px;
+        padding: 40px 44px; box-shadow: 0 6px 28px rgba(0,0,0,0.10);
+        max-width: 440px; margin: 0 auto;
+    }}
+
+    .stTabs [data-baseweb="tab-list"] {{ background: {'#21262D' if is_dark else '#F0F4FA'}; border-radius: 10px; padding: 4px; }}
+    .stTabs [data-baseweb="tab"] {{ color: {muted}; border-radius: 7px; font-weight: 500; }}
+    .stTabs [aria-selected="true"] {{
+        color: {acc} !important; background: {card} !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10); font-weight: 700;
+    }}
+
+    hr {{ border-color: {border}; margin: 16px 0; }}
+    .stProgress > div > div {{ background-color: {acc} !important; }}
+    .stAlert {{ border-radius: 10px; }}
+    [data-testid="stDataFrame"] {{ border-radius: 10px; overflow: hidden; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
+# AUTH
+# ============================================================
+DEMO_USERS = {
+    "admin@healthlink.ke":   {"pw": hashlib.sha256("Admin2024!".encode()).hexdigest(),  "role": "Administrator", "name": "Dr. Admin"},
+    "doctor@healthlink.ke":  {"pw": hashlib.sha256("Doctor2024!".encode()).hexdigest(), "role": "Clinician",     "name": "Dr. Wanjiku"},
+    "nurse@healthlink.ke":   {"pw": hashlib.sha256("Nurse2024!".encode()).hexdigest(),  "role": "Nurse",         "name": "Sr. Auma"},
+    "planner@healthlink.ke": {"pw": hashlib.sha256("Plan2024!".encode()).hexdigest(),   "role": "Health Planner","name": "Mr. Omondi"},
+}
+
+def do_logout():
+    st.session_state.authenticated = False
+    st.session_state.user = {}
+
+if not st.session_state.authenticated:
+    st.markdown(f"""
+    <div style='text-align:center; padding:48px 0 24px 0;'>
+        <div style='font-size:56px;'>⚕️</div>
+        <div style='font-size:30px; font-weight:800; color:{acc}; margin-top:8px;'>HealthLink Kenya</div>
+        <div style='font-size:14px; color:{muted}; margin-top:6px; font-weight:500;'>
+            Clinical Decision-Support Platform · Hospital Referral System
+        </div>
+    </div>""", unsafe_allow_html=True)
+
+    col_l, col_c, col_r = st.columns([1, 1.4, 1])
+    with col_c:
+        mode_tab = st.radio("", ["🔑  Sign In", "📝  Create Account"],
+                            horizontal=True, label_visibility="collapsed")
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+        if "Sign In" in mode_tab:
+            st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;margin-bottom:20px;color:{acc};'>Sign In to Your Account</h3>", unsafe_allow_html=True)
+            email    = st.text_input("Email Address", placeholder="you@healthlink.ke")
+            password = st.text_input("Password", type="password", placeholder="Enter password")
+            if st.button("Sign In", use_container_width=True):
+                hashed = hashlib.sha256(password.encode()).hexdigest()
+                if email in DEMO_USERS and DEMO_USERS[email]["pw"] == hashed:
+                    st.session_state.authenticated = True
+                    st.session_state.user = {"email": email, **DEMO_USERS[email]}
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials. Try: doctor@healthlink.ke / Doctor2024!")
+            st.markdown(f"""
+            <div style='margin-top:16px;padding:12px 14px;background:{'#21262D' if is_dark else '#F7F9FC'};
+                        border-radius:8px;font-size:11px;color:{muted};line-height:2.0;'>
+                <b style='color:{acc};'>Demo accounts:</b><br>
+                doctor@healthlink.ke · <i>Doctor2024!</i><br>
+                nurse@healthlink.ke · <i>Nurse2024!</i><br>
+                planner@healthlink.ke · <i>Plan2024!</i>
+            </div>""", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;margin-bottom:20px;color:{acc};'>Create an Account</h3>", unsafe_allow_html=True)
+            new_name     = st.text_input("Full Name", placeholder="Dr. Jane Njoroge")
+            new_email    = st.text_input("Institutional Email", placeholder="you@hospital.ke")
+            new_role     = st.selectbox("Role", ["Clinician","Nurse","Health Planner","Administrator","Research Officer"])
+            new_facility = st.text_input("Facility / Organisation", placeholder="Kenyatta National Hospital")
+            new_pw       = st.text_input("Password", type="password", placeholder="Create a strong password")
+            new_pw2      = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
+            if st.button("Create Account", use_container_width=True):
+                if not all([new_name, new_email, new_pw]):
+                    st.warning("Please fill in all required fields.")
+                elif new_pw != new_pw2:
+                    st.error("Passwords do not match.")
+                elif len(new_pw) < 8:
+                    st.error("Password must be at least 8 characters.")
+                else:
+                    st.success(f"✅ Account created for {new_name}. Please sign in.")
+            st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
+
+# ============================================================
 # DATA
 # ============================================================
-FACILITIES = pd.DataFrame([
-    {"Name": "Kenyatta National Hospital",    "Type": "National Referral", "Sector": "Public",     "Dist_km": 0,    "Insurance_pct": 91, "Wealth": "Highest", "Access_pct": 94, "Retention_pct": 89, "Lat": -1.3006, "Lon": 36.8066, "Paradox": False, "Phone": "+254202726300"},
-    {"Name": "Pumwani Maternity Hospital",    "Type": "County Hospital",   "Sector": "Public",     "Dist_km": 4.2,  "Insurance_pct": 62, "Wealth": "Middle",  "Access_pct": 81, "Retention_pct": 74, "Lat": -1.2841, "Lon": 36.8458, "Paradox": False, "Phone": "+254202216977"},
-    {"Name": "Mathare North HC",             "Type": "Health Centre",     "Sector": "Public",     "Dist_km": 6.8,  "Insurance_pct": 31, "Wealth": "Lowest",  "Access_pct": 48, "Retention_pct": 44, "Lat": -1.2611, "Lon": 36.8590, "Paradox": True,  "Phone": "+254208020000"},
-    {"Name": "Mbagathi District Hospital",   "Type": "County Hospital",   "Sector": "Public",     "Dist_km": 8.1,  "Insurance_pct": 55, "Wealth": "Middle",  "Access_pct": 77, "Retention_pct": 71, "Lat": -1.3217, "Lon": 36.7680, "Paradox": False, "Phone": "+254202705272"},
-    {"Name": "Kayole Sub-County Hospital",   "Type": "Sub-County",        "Sector": "Public",     "Dist_km": 12.4, "Insurance_pct": 28, "Wealth": "Second",  "Access_pct": 43, "Retention_pct": 38, "Lat": -1.2718, "Lon": 36.9001, "Paradox": True,  "Phone": "+254208020000"},
-    {"Name": "Dandora Dispensary",           "Type": "Dispensary",        "Sector": "Public",     "Dist_km": 18.3, "Insurance_pct": 19, "Wealth": "Lowest",  "Access_pct": 37, "Retention_pct": 30, "Lat": -1.2595, "Lon": 36.9087, "Paradox": True,  "Phone": "+254208020000"},
-    {"Name": "Kangemi Health Centre",        "Type": "Health Centre",     "Sector": "Public",     "Dist_km": 21.1, "Insurance_pct": 33, "Wealth": "Second",  "Access_pct": 55, "Retention_pct": 48, "Lat": -1.2724, "Lon": 36.7369, "Paradox": False, "Phone": "+254208020000"},
-    {"Name": "Thika Level 5 Hospital",       "Type": "County Hospital",   "Sector": "Public",     "Dist_km": 44.2, "Insurance_pct": 52, "Wealth": "Fourth",  "Access_pct": 24, "Retention_pct": 20, "Lat": -1.0332, "Lon": 37.0693, "Paradox": False, "Phone": "+254672203100"},
-    # Faith-Based
-    {"Name": "Mater Misericordiae Hospital", "Type": "County Hospital",   "Sector": "Faith-Based","Dist_km": 3.1,  "Insurance_pct": 70, "Wealth": "Middle",  "Access_pct": 82, "Retention_pct": 77, "Lat": -1.3056, "Lon": 36.8347, "Paradox": False, "Phone": "+254206902000"},
-    {"Name": "St. Francis Community Hosp.", "Type": "Health Centre",     "Sector": "Faith-Based","Dist_km": 7.4,  "Insurance_pct": 48, "Wealth": "Middle",  "Access_pct": 71, "Retention_pct": 65, "Lat": -1.3102, "Lon": 36.8789, "Paradox": False, "Phone": "+254208020000"},
-    {"Name": "Nairobi Baptist Hospital",     "Type": "Clinic",            "Sector": "Faith-Based","Dist_km": 9.2,  "Insurance_pct": 53, "Wealth": "Middle",  "Access_pct": 68, "Retention_pct": 62, "Lat": -1.2956, "Lon": 36.7823, "Paradox": False, "Phone": "+254203874000"},
-    {"Name": "Coptic Hospital Nairobi",      "Type": "County Hospital",   "Sector": "Faith-Based","Dist_km": 5.8,  "Insurance_pct": 65, "Wealth": "Fourth",  "Access_pct": 79, "Retention_pct": 73, "Lat": -1.2780, "Lon": 36.8120, "Paradox": False, "Phone": "+254202710900"},
-    # Private
-    {"Name": "Aga Khan University Hospital", "Type": "National Referral", "Sector": "Private",    "Dist_km": 2.8,  "Insurance_pct": 95, "Wealth": "Highest", "Access_pct": 91, "Retention_pct": 88, "Lat": -1.2612, "Lon": 36.8242, "Paradox": False, "Phone": "+254203662000"},
-    {"Name": "Nairobi Hospital",             "Type": "County Hospital",   "Sector": "Private",    "Dist_km": 3.5,  "Insurance_pct": 88, "Wealth": "Highest", "Access_pct": 89, "Retention_pct": 85, "Lat": -1.2949, "Lon": 36.8021, "Paradox": False, "Phone": "+254202845000"},
+FACILITIES_DATA = pd.DataFrame([
+    {"Name":"Kenyatta National Hospital",   "Type":"National Referral Hospital",    "Specialties":"Oncology, Cardiology, Neurology, Trauma, Burns, Transplant",         "Dist_km":0,    "Insurance_pct":91,"Wealth":"Highest","Access_pct":94,"Retention_pct":89,"Lat":-1.3006,"Lon":36.8066,"Paradox":False,"Beds":1800},
+    {"Name":"Pumwani Maternity Hospital",   "Type":"County Hospital",               "Specialties":"Maternity, Neonatal ICU, Gynaecology",                               "Dist_km":4.2,  "Insurance_pct":62,"Wealth":"Middle", "Access_pct":81,"Retention_pct":74,"Lat":-1.2841,"Lon":36.8458,"Paradox":False,"Beds":320},
+    {"Name":"Mathare North HC",             "Type":"Health Centre",                 "Specialties":"General OPD, Maternal Health, Immunisation",                         "Dist_km":6.8,  "Insurance_pct":31,"Wealth":"Lowest", "Access_pct":48,"Retention_pct":44,"Lat":-1.2611,"Lon":36.8590,"Paradox":True, "Beds":40},
+    {"Name":"Mbagathi District Hospital",   "Type":"County Hospital",               "Specialties":"General Surgery, Infectious Disease, Psychiatry, Paediatrics",        "Dist_km":8.1,  "Insurance_pct":55,"Wealth":"Middle", "Access_pct":77,"Retention_pct":71,"Lat":-1.3217,"Lon":36.7680,"Paradox":False,"Beds":260},
+    {"Name":"Kayole Sub-County Hospital",   "Type":"Sub-County Hospital",           "Specialties":"Emergency, Maternity, General OPD, Eye Clinic",                      "Dist_km":12.4, "Insurance_pct":28,"Wealth":"Second", "Access_pct":43,"Retention_pct":38,"Lat":-1.2718,"Lon":36.9001,"Paradox":True, "Beds":120},
+    {"Name":"Ruaraka Health Centre",        "Type":"Clinic",                        "Specialties":"General OPD, Family Planning, HIV/ART",                              "Dist_km":15.0, "Insurance_pct":44,"Wealth":"Middle", "Access_pct":65,"Retention_pct":59,"Lat":-1.2488,"Lon":36.8756,"Paradox":False,"Beds":20},
+    {"Name":"Dandora Dispensary",           "Type":"Dispensary",                    "Specialties":"Basic Primary Care, Immunisation, Wound Care",                       "Dist_km":18.3, "Insurance_pct":19,"Wealth":"Lowest", "Access_pct":37,"Retention_pct":30,"Lat":-1.2595,"Lon":36.9087,"Paradox":True, "Beds":10},
+    {"Name":"Kangemi Health Centre",        "Type":"Health Centre",                 "Specialties":"General OPD, Maternal Health, TB/DOTS, Dental",                      "Dist_km":21.1, "Insurance_pct":33,"Wealth":"Second", "Access_pct":55,"Retention_pct":48,"Lat":-1.2724,"Lon":36.7369,"Paradox":False,"Beds":35},
+    {"Name":"Nairobi West Hospital",        "Type":"Religious / Mission Hospital",  "Specialties":"Oncology, Orthopaedics, Cardiology, Dialysis, ICU",                  "Dist_km":9.5,  "Insurance_pct":74,"Wealth":"Fourth", "Access_pct":82,"Retention_pct":76,"Lat":-1.3146,"Lon":36.8100,"Paradox":False,"Beds":200},
+    {"Name":"Aga Khan University Hospital", "Type":"Private Hospital",              "Specialties":"Neurosurgery, Oncology, Cardiology, Transplant, MRI/CT",             "Dist_km":3.1,  "Insurance_pct":96,"Wealth":"Highest","Access_pct":91,"Retention_pct":88,"Lat":-1.2702,"Lon":36.8074,"Paradox":False,"Beds":250},
+    {"Name":"Limuru Sub-County Hospital",   "Type":"Sub-County Hospital",           "Specialties":"General Surgery, Maternity, Emergency",                              "Dist_km":31.7, "Insurance_pct":47,"Wealth":"Middle", "Access_pct":31,"Retention_pct":26,"Lat":-1.1140,"Lon":36.6480,"Paradox":False,"Beds":80},
+    {"Name":"Thika Level 5 Hospital",       "Type":"County Referral Hospital",      "Specialties":"Oncology, Dialysis, Orthopaedics, ICU, Cardiology",                  "Dist_km":44.2, "Insurance_pct":52,"Wealth":"Fourth", "Access_pct":24,"Retention_pct":20,"Lat":-1.0332,"Lon":37.0693,"Paradox":False,"Beds":350},
+    {"Name":"Meds Chemist Westlands",       "Type":"Pharmacy / Chemist",            "Specialties":"Pharmaceutical dispensing, OTC medications, Lab services",           "Dist_km":5.2,  "Insurance_pct":55,"Wealth":"Fourth", "Access_pct":88,"Retention_pct":72,"Lat":-1.2633,"Lon":36.8036,"Paradox":False,"Beds":0},
+    {"Name":"St Francis Community Clinic",  "Type":"Religious / Mission Clinic",    "Specialties":"General OPD, HIV/ART, Nutrition, TB/DOTS",                           "Dist_km":14.0, "Insurance_pct":22,"Wealth":"Lowest", "Access_pct":58,"Retention_pct":50,"Lat":-1.2800,"Lon":36.8700,"Paradox":False,"Beds":15},
 ])
 
 MODEL_PERF = pd.DataFrame([
-    {"Algorithm": "XGBoost (Best Model)", "F1": 0.9034, "AUC": 0.6524, "Accuracy": 0.8240, "Top": True },
-    {"Algorithm": "Gradient Boosting",    "F1": 0.9034, "AUC": 0.6463, "Accuracy": 0.8239, "Top": False},
-    {"Algorithm": "AdaBoost",             "F1": 0.9034, "AUC": 0.6397, "Accuracy": 0.8238, "Top": False},
-    {"Algorithm": "Combined Top 3",       "F1": 0.9034, "AUC": 0.6510, "Accuracy": 0.8238, "Top": False},
-    {"Algorithm": "Decision Tree",        "F1": 0.7584, "AUC": 0.6445, "Accuracy": 0.6496, "Top": False},
-    {"Algorithm": "Random Forest",        "F1": 0.7509, "AUC": 0.6528, "Accuracy": 0.6422, "Top": False},
-    {"Algorithm": "Basic Logistic Model", "F1": 0.5152, "AUC": 0.5248, "Accuracy": 0.4281, "Top": False},
+    {"Algorithm":"XGBoost (Optimised)", "F1":0.9034,"AUC":0.6524,"Accuracy":0.8240,"Operational":True },
+    {"Algorithm":"Gradient Boosting",   "F1":0.9034,"AUC":0.6463,"Accuracy":0.8239,"Operational":False},
+    {"Algorithm":"AdaBoost",            "F1":0.9034,"AUC":0.6397,"Accuracy":0.8238,"Operational":False},
+    {"Algorithm":"Ensemble (Top 3)",    "F1":0.9034,"AUC":0.6510,"Accuracy":0.8238,"Operational":False},
+    {"Algorithm":"Decision Tree",       "F1":0.7584,"AUC":0.6445,"Accuracy":0.6496,"Operational":False},
+    {"Algorithm":"Random Forest",       "F1":0.7509,"AUC":0.6528,"Accuracy":0.6422,"Operational":False},
+    {"Algorithm":"Logistic Regression", "F1":0.5152,"AUC":0.5248,"Accuracy":0.4281,"Operational":False},
 ])
 
 SHAP_DATA = pd.DataFrame([
-    {"Feature": "Distance to facility",  "Importance": 0.41, "Category": "Enabling",     "Plain": "How far the patient lives from a hospital"},
-    {"Feature": "Household wealth",      "Importance": 0.18, "Category": "Enabling",     "Plain": "How wealthy the patient's household is"},
-    {"Feature": "Health insurance",      "Importance": 0.14, "Category": "Enabling",     "Plain": "Whether the patient has insurance cover"},
-    {"Feature": "Urban vs Rural",        "Importance": 0.09, "Category": "Predisposing", "Plain": "Whether the patient lives in a city or village"},
-    {"Feature": "Education level",       "Importance": 0.08, "Category": "Predisposing", "Plain": "How much education the patient has received"},
-    {"Feature": "Age group",             "Importance": 0.05, "Category": "Predisposing", "Plain": "The age of the patient"},
-    {"Feature": "Gender",                "Importance": 0.03, "Category": "Predisposing", "Plain": "Whether the patient is male or female"},
-    {"Feature": "Facility type",         "Importance": 0.02, "Category": "Need",         "Plain": "The type of facility visited"},
+    {"Feature":"Distance (km)",    "Importance":0.41,"Category":"Enabling"},
+    {"Feature":"Wealth Index",     "Importance":0.18,"Category":"Enabling"},
+    {"Feature":"Insurance Status", "Importance":0.14,"Category":"Enabling"},
+    {"Feature":"Residence Type",   "Importance":0.09,"Category":"Predisposing"},
+    {"Feature":"Education Level",  "Importance":0.08,"Category":"Predisposing"},
+    {"Feature":"Age Group",        "Importance":0.05,"Category":"Predisposing"},
+    {"Feature":"Gender",           "Importance":0.03,"Category":"Predisposing"},
+    {"Feature":"Provider Type",    "Importance":0.02,"Category":"Need"},
 ])
 
 GAM_DIST = [0,5,10,15,20,25,30,35,40,50,60,80,100]
 GAM_PROB = [0.96,0.94,0.91,0.88,0.84,0.76,0.58,0.40,0.27,0.14,0.08,0.04,0.02]
 
-SECTOR_COLORS = {"Public": "blue", "Faith-Based": "purple", "Private": "green"}
-SECTOR_ICONS  = {"Public": "medkit", "Faith-Based": "heart", "Private": "plus-square"}
+FOLIUM_COLORS = {
+    "National Referral Hospital":   "darkblue",
+    "County Referral Hospital":     "blue",
+    "County Hospital":              "cadetblue",
+    "Sub-County Hospital":          "darkgreen",
+    "Health Centre":                "green",
+    "Clinic":                       "lightgreen",
+    "Dispensary":                   "orange",
+    "Pharmacy / Chemist":           "purple",
+    "Religious / Mission Hospital": "red",
+    "Religious / Mission Clinic":   "pink",
+    "Private Hospital":             "darkpurple",
+}
+LEGEND_COLORS = {
+    "National Referral Hospital":   "#1D4ED8",
+    "County Referral Hospital":     "#2563EB",
+    "County Hospital":              "#0891B2",
+    "Sub-County Hospital":          "#0D9488",
+    "Health Centre":                "#059669",
+    "Clinic":                       "#65A30D",
+    "Dispensary":                   "#CA8A04",
+    "Pharmacy / Chemist":           "#9333EA",
+    "Religious / Mission Hospital": "#E11D48",
+    "Religious / Mission Clinic":   "#F43F5E",
+    "Private Hospital":             "#7C3AED",
+}
+
+ALL_SPECIALTIES = sorted(set(
+    s.strip() for row in FACILITIES_DATA["Specialties"] for s in row.split(",")
+))
+
+def make_facility_map(filtered_df, show_ring=True, tiles=None):
+    tile = tiles or st.session_state.map_style
+    m = folium.Map(location=[-1.2921, 36.8219], zoom_start=11, tiles=tile)
+    if show_ring:
+        folium.Circle(
+            location=[-1.3006, 36.8066], radius=25000,
+            color="#1D4ED8", weight=2, fill=True,
+            fill_color="#1D4ED8", fill_opacity=0.05,
+            tooltip="25km GAM Critical Threshold"
+        ).add_to(m)
+    for _, row in filtered_df.iterrows():
+        f_color = "red" if (row["Paradox"] and st.session_state.show_paradox) else FOLIUM_COLORS.get(row["Type"], "gray")
+        folium.Marker(
+            location=[row["Lat"], row["Lon"]],
+            tooltip=f"{row['Name']} · {row['Type']}",
+            popup=folium.Popup(
+                f"""<div style='font-family:sans-serif;font-size:12px;min-width:200px;'>
+                <b style='color:#0B3D6E;font-size:13px;'>{row['Name']}</b><br>
+                <span style='color:#6B84A0;'>{row['Type']}</span><br><br>
+                <b>Specialties:</b> {row['Specialties']}<br><br>
+                <table style='width:100%;font-size:11px;'>
+                  <tr><td style='color:#6B84A0;'>Distance:</td><td><b>{row['Dist_km']} km</b></td></tr>
+                  <tr><td style='color:#6B84A0;'>Access Rate:</td><td><b>{row['Access_pct']}%</b></td></tr>
+                  <tr><td style='color:#6B84A0;'>Retention Rate:</td><td><b>{row['Retention_pct']}%</b></td></tr>
+                  <tr><td style='color:#6B84A0;'>Insurance:</td><td><b>{row['Insurance_pct']}%</b></td></tr>
+                  {'<tr><td colspan=2 style="color:red;font-weight:bold;">⚠ Urban Proximity Paradox</td></tr>' if row['Paradox'] else ''}
+                </table></div>""",
+                max_width=260
+            ),
+            icon=folium.Icon(color=f_color, icon="plus-sign", prefix="glyphicon")
+        ).add_to(m)
+    return m
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371
+    dlat = math.radians(lat2 - lat1); dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
+    return R * 2 * math.asin(math.sqrt(a))
 
 # ============================================================
 # SIDEBAR
 # ============================================================
+user = st.session_state.user
 with st.sidebar:
     st.markdown(f"""
-    <div style='text-align:center; padding:16px 0 8px 0;'>
-        <div style='font-size:40px;'>⚕️</div>
-        <div style='font-size:17px; font-weight:800; color:{HEAD}; margin-top:6px;'>HealthLink Kenya</div>
-        <div style='font-size:11px; color:{MUTED}; margin-top:4px; line-height:1.7;'>
-            Hospital Referral Decision Support<br>Strathmore University · MSc DSA 2026
-        </div>
+    <div style='text-align:center;padding:20px 0 14px 0;'>
+        <div style='font-size:42px;'>⚕️</div>
+        <div style='font-size:17px;font-weight:800;color:{acc};margin-top:6px;'>HealthLink Kenya</div>
+        <div style='font-size:11px;color:{muted};margin-top:4px;'>Clinical Decision-Support Platform</div>
+    </div>
+    <div style='background:{"#21262D" if is_dark else "#F0F4FA"};border-radius:10px;padding:10px 14px;margin-bottom:10px;'>
+        <div style='font-size:12px;font-weight:700;color:{acc};'>👤 {user.get("name","User")}</div>
+        <div style='font-size:11px;color:{muted};'>{user.get("role","")}</div>
+        <div style='font-size:10px;color:{muted};margin-top:2px;opacity:0.7;'>{user.get("email","")}</div>
     </div>
     """, unsafe_allow_html=True)
-
     st.markdown("---")
-    col_dm1, col_dm2 = st.columns([3, 1])
-    with col_dm1:
-        st.markdown(f"<div style='color:{MUTED}; font-size:12px; font-weight:600; padding-top:8px;'>{'🌙 Dark Mode' if not st.session_state.dark_mode else '☀️ Light Mode'}</div>", unsafe_allow_html=True)
-    with col_dm2:
-        if st.button("Switch"):
-            st.session_state.dark_mode = not st.session_state.dark_mode
-            st.rerun()
 
-    st.markdown("---")
     module = st.radio("Navigate", [
-        "🏠  Home",
-        "🏥  Find a Hospital",
-        "🗺️  Facility Map",
-        "📊  Access & Retention",
-        "🔬  How It Works",
-        "⚙️  Model Results",
+        "📊  Overview & Insights",
+        "🏥  Triage & Facility Map",
+        "🗺️  Geospatial Mapper",
+        "👤  Patient Retention Record",
+        "📍  Distance Decay (GAM)",
+        "📈  Analytics & Visuals",
+        "❓  FAQ & How It Works",
+        "⚙️  Settings",
     ], label_visibility="collapsed")
 
     st.markdown("---")
     st.markdown(f"""
-    <div style='font-size:10px; color:{MUTED}; line-height:2;'>
-        <b>Data:</b> KNBS Health Survey 2022<br>
-        <b>Records:</b> 99,031 observations<br>
-        <b>Model:</b> XGBoost · F1: 0.90<br>
-        <b>Key finding:</b> 25km access threshold
-    </div>
-    """, unsafe_allow_html=True)
-
-
-# ============================================================
-# HOME
-# ============================================================
-if "Home" in module:
-    st.markdown(f"<h1>🏠 Welcome to HealthLink Kenya</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:{MUTED}; font-size:14px;'>A decision-support tool for hospital referral planning · Strathmore University MSc Thesis 2026</p>", unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class='plain-box'>
-        <b>What does this dashboard do?</b><br><br>
-        This tool helps hospitals in Kenya decide <b>where to send patients</b> when they need care.
-        It uses data from <b>99,031 real Kenyans</b> to predict whether a patient is likely to access care,
-        and identifies which nearby hospitals are available, accessible, and well-resourced.<br><br>
-        <b>Who is it for?</b> Hospital administrators, referral coordinators, and health planners.
-    </div>
-    """, unsafe_allow_html=True)
-
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Patients Who Access Care",  "78.4%", "↑ 3.2% improvement")
-    k2.metric("Patients Who Return",        "71.2%", "↑ 1.8% improvement")
-    k3.metric("Critical Distance",          "25 km", "Access drops sharply beyond this")
-    k4.metric("Hidden Barriers Found",      "3,484", "Urban patients blocked by hidden issues")
-
+    <div style='font-size:10px;color:{muted};line-height:2.0;'>
+        <b>Model:</b> XGBoost · F1 0.9034<br>
+        <b>AUC:</b> 0.6524 · Acc: 0.8240<br>
+        <b>Data:</b> KNBS HSB Survey 2022<br>
+        <b>n =</b> 99,031 observations<br>
+        <b>Threshold:</b> 25km (GAM)<br>
+        <b>API:</b> {st.session_state.api_url}
+    </div>""", unsafe_allow_html=True)
     st.markdown("---")
-    st.markdown(f"<h3>📖 What Each Section Shows</h3>", unsafe_allow_html=True)
+    if st.button("🚪  Sign Out", use_container_width=True):
+        do_logout()
+        st.rerun()
 
-    sections = [
-        ("🏥 Find a Hospital",   "Enter a patient's details to predict whether they will access care and get a referral recommendation.", ACCENT),
-        ("🗺️ Facility Map",      "See all hospitals on an interactive map. Call a facility directly or plan a route.", GOLD),
-        ("📊 Access & Retention","See which facility types have the highest and lowest access rates across Kenya.", SKY),
-        ("🔬 How It Works",      "A plain-English explanation of which factors matter most in predicting access to care.", PURPLE),
-        ("⚙️ Model Results",     "Technical performance results for researchers and supervisors.", MUTED),
-    ]
-    c1, c2 = st.columns(2)
-    for i, (title, desc, color) in enumerate(sections):
-        col = c1 if i % 2 == 0 else c2
-        col.markdown(f"""
-        <div class='card' style='border-left:4px solid {color};'>
-            <div style='font-size:14px; font-weight:700; color:{color}; margin-bottom:6px;'>{title}</div>
-            <div style='font-size:12px; color:{MUTED}; line-height:1.7;'>{desc}</div>
+# ============================================================
+# TOP-RIGHT DARK / LIGHT MODE TOGGLE
+# ============================================================
+_spacer, _toggle_col = st.columns([8, 1])
+with _toggle_col:
+    toggle_label = "☀️ Light" if is_dark else "🌙 Dark"
+    if st.button(toggle_label, use_container_width=True):
+        st.session_state.theme = "light" if is_dark else "dark"
+        st.rerun()
+
+# ============================================================
+# PAGE 1 — OVERVIEW & INSIGHTS
+# ============================================================
+if "Overview" in module:
+    st.markdown("## 📊 Overview & Insights")
+    st.caption("KNBS Health-Seeking Behaviour Survey 2022 · n = 99,031 · XGBoost Operational Model")
+
+    k1,k2,k3,k4 = st.columns(4)
+    k1.metric("Population Access Rate",  "78.4%",  "+3.2% vs prev. quarter")
+    k2.metric("Retention Rate",          "71.2%",  "+1.8% vs prev. quarter")
+    k3.metric("GAM Critical Threshold",  "25 km",  "Access drops sharply beyond")
+    k4.metric("Urban Proximity Paradox", "3,484",  "Patients facing hidden barriers")
+    st.markdown("---")
+
+    st.markdown("### Andersen's Behavioural Model — Feature Weight by Category")
+    col_a,col_b,col_c = st.columns(3)
+    with col_a:
+        st.markdown(f"""<div class='med-card-amber'>
+            <div style='font-size:12px;font-weight:700;color:#92400E;letter-spacing:.04em;text-transform:uppercase;'>Enabling Factors · 73%</div>
+            <div style='font-size:13px;color:{muted};margin-top:10px;line-height:2.2;'>
+                Distance to Facility &nbsp;<b style='color:{text};'>41%</b><br>
+                Wealth Index &nbsp;<b style='color:{text};'>18%</b><br>
+                Insurance Status &nbsp;<b style='color:{text};'>14%</b>
+            </div>
+            <div style='font-size:10px;color:#B45309;margin-top:10px;font-weight:600;'>Dominant predictors of access</div>
+        </div>""", unsafe_allow_html=True)
+    with col_b:
+        st.markdown(f"""<div class='med-card-blue'>
+            <div style='font-size:12px;font-weight:700;color:#1E3A8A;letter-spacing:.04em;text-transform:uppercase;'>Predisposing Factors · 25%</div>
+            <div style='font-size:13px;color:{muted};margin-top:10px;line-height:2.2;'>
+                Residence Type &nbsp;<b style='color:{text};'>9%</b><br>
+                Education Level &nbsp;<b style='color:{text};'>8%</b><br>
+                Age Group &nbsp;<b style='color:{text};'>5%</b> &nbsp; Gender &nbsp;<b style='color:{text};'>3%</b>
+            </div>
+            <div style='font-size:10px;color:#1D4ED8;margin-top:10px;font-weight:600;'>Demographic &amp; social attributes</div>
+        </div>""", unsafe_allow_html=True)
+    with col_c:
+        st.markdown(f"""<div class='med-card-green'>
+            <div style='font-size:12px;font-weight:700;color:#065F46;letter-spacing:.04em;text-transform:uppercase;'>Need Factors · 2%</div>
+            <div style='font-size:13px;color:{muted};margin-top:10px;line-height:2.2;'>
+                Provider Group &nbsp;<b style='color:{text};'>2%</b><br>
+                Perceived health need<br>Triage classification
+            </div>
+            <div style='font-size:10px;color:#059669;margin-top:10px;font-weight:600;'>Lowest individual weight</div>
         </div>""", unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class='card card-red' style='margin-top:8px;'>
-        <div style='font-size:13px; font-weight:700; color:{RED}; margin-bottom:6px;'>⚠️ Key Finding: The Urban Proximity Paradox</div>
-        <div style='font-size:12px; color:{MUTED}; line-height:1.8;'>
-        3,484 patients lived <b>close to a hospital</b> but still did <b>not</b> access care.
-        Hidden barriers — long wait times, indirect costs, poor service quality —
-        are stopping people from getting help even when a hospital is nearby.
-        </div>
+    st.markdown("---")
+    col_l,col_r = st.columns(2)
+    fac_types      = ["National Referral","County Hospital","Sub-County","Health Centre","Dispensary/Clinic"]
+    access_vals    = [94,79,61,52,37]
+    retention_vals = [89,71,53,44,30]
+
+    with col_l:
+        st.markdown("#### Access Rate by Facility Type")
+        fig_a = go.Figure(go.Bar(
+            x=access_vals, y=fac_types, orientation="h",
+            marker_color=[acc if v>=50 else "#EF4444" for v in access_vals],
+            text=[f"{v}%" for v in access_vals], textposition="outside",
+            textfont=dict(color=TICK_COL, size=13)
+        ))
+        fig_a.update_layout(paper_bgcolor=card, plot_bgcolor=card, height=260,
+            margin=dict(l=0,r=60,t=10,b=10),
+            xaxis=dict(showgrid=True, gridcolor=border, range=[0,115], tickfont=dict(color=TICK_COL)),
+            yaxis=dict(tickfont=dict(color=TICK_COL, size=13)), showlegend=False)
+        st.plotly_chart(fig_a, use_container_width=True)
+
+    with col_r:
+        st.markdown("#### Access → Retention Gap")
+        gap_vals   = [a-r for a,r in zip(access_vals,retention_vals)]
+        gap_colors = ["#EF4444" if g>12 else "#F59E0B" if g>8 else "#10B981" for g in gap_vals]
+        fig_g = go.Figure(go.Bar(
+            x=gap_vals, y=fac_types, orientation="h", marker_color=gap_colors,
+            text=[f"{v}pp" for v in gap_vals], textposition="outside",
+            textfont=dict(color=TICK_COL, size=13)
+        ))
+        fig_g.update_layout(paper_bgcolor=card, plot_bgcolor=card, height=260,
+            margin=dict(l=0,r=70,t=10,b=10),
+            xaxis=dict(showgrid=True, gridcolor=border, range=[0,25], tickfont=dict(color=TICK_COL),
+                       title=dict(text="Access–Retention gap (pp)", font=dict(color=TICK_COL))),
+            yaxis=dict(tickfont=dict(color=TICK_COL, size=13)), showlegend=False)
+        st.plotly_chart(fig_g, use_container_width=True)
+
+    st.markdown(f"""<div class='med-card-red'>
+        <b style='color:#DC2626;'>⚠️ Urban Proximity Paradox Detected</b><br>
+        <span style='font-size:12px;color:{muted};'>
+        3,484 patients within &lt;50km failed to access care despite favourable profiles.
+        Flagged: <b style='color:{text};'>Mathare North HC · Kayole Sub-County · Dandora Dispensary</b>.
+        </span>
     </div>""", unsafe_allow_html=True)
 
 
 # ============================================================
-# FIND A HOSPITAL (TRIAGE)
+# PAGE 2 — TRIAGE & FACILITY MAP (combined, original)
 # ============================================================
-elif "Find" in module:
-    st.markdown(f"<h1>🏥 Find the Right Hospital</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:{MUTED}; font-size:13px;'>Fill in the patient's details to get a care access prediction and referral recommendation.</p>", unsafe_allow_html=True)
+elif "Triage" in module:
+    st.markdown("## 🏥 Predictive Triage & Nearby Facilities")
+    st.caption("Enter patient profile → get access probability → see nearby facilities on map")
 
-    col1, col2 = st.columns(2)
+    col1,col2 = st.columns(2)
     with col1:
-        st.markdown(f"<div style='font-size:13px; font-weight:700; color:{HEAD}; margin-bottom:8px;'>👤 Patient Information</div>", unsafe_allow_html=True)
-        age_group = st.selectbox("Patient Age Group", ["0–4 (Infant)", "5–14 (Child)", "15–24 (Young Adult)", "25–34 (Adult)", "35–49 (Adult)", "50–64 (Older Adult)", "65+ (Elderly)"])
-        gender    = st.selectbox("Gender", ["Female", "Male"])
-        residence = st.radio("Lives in", ["Urban area (city/town)", "Rural area (village)"], horizontal=True)
-
+        st.markdown("#### Patient Demographics")
+        age_group = st.selectbox("Age Group", ["0-4","5-14","15-24","25-34","35-49","50-64","65+"])
+        gender    = st.selectbox("Gender", ["Female","Male"])
+        residence = st.radio("Residence Type", ["Urban","Rural"], horizontal=True)
     with col2:
-        st.markdown(f"<div style='font-size:13px; font-weight:700; color:{HEAD}; margin-bottom:8px;'>📍 Access Factors</div>", unsafe_allow_html=True)
-        wealth_index = st.select_slider("Household Wealth Level", options=["Very Poor", "Poor", "Middle", "Comfortable", "Wealthy"])
-        insurance    = st.radio("Has Health Insurance?", ["Yes", "No"], horizontal=True)
-        distance_km  = st.slider("Distance to Nearest Hospital (km)", 0.0, 100.0, 5.0, 0.5)
+        st.markdown("#### Enabling Factors")
+        wealth_index = st.select_slider("Wealth Index", options=["Poorest","Poorer","Middle","Richer","Richest"])
+        insurance    = st.radio("Insurance Status", ["Insured","Uninsured"], horizontal=True)
+        distance_km  = st.slider("Distance to Nearest Facility (km)", 0.0, 100.0, 5.0, 0.5)
 
     if distance_km > 25:
-        st.markdown(f'<div class="card card-red"><b style="color:{RED};">⚠️ Beyond the 25km safe zone.</b> <span style="font-size:12px;color:{MUTED};">Access drops sharply here. Consider mobile clinic or ambulance dispatch.</span></div>', unsafe_allow_html=True)
+        st.markdown(f"""<div class='med-card-red' style='margin-top:8px;'>
+            <b style='color:#DC2626;'>📍 Beyond GAM Threshold (25km)</b> —
+            <span style='font-size:12px;color:{muted};'>Access probability drops sharply. Consider mobile clinic or ambulance dispatch.</span>
+        </div>""", unsafe_allow_html=True)
     elif distance_km > 15:
-        st.markdown(f'<div class="card card-gold"><span style="font-size:12px;color:{GOLD};">⚡ Caution zone (15–25km). Monitor and consider outreach support.</span></div>', unsafe_allow_html=True)
+        st.markdown(f"""<div class='med-card-amber' style='margin-top:8px;'>
+            <span style='font-size:12px;color:#92400E;'>⚡ Approaching critical zone (15–25km). Monitor this catchment.</span>
+        </div>""", unsafe_allow_html=True)
 
-    clinical_notes = st.text_area("Any notes about the patient (optional)", placeholder="e.g. Patient has difficulty walking, no transport access...", height=80)
+    clinical_notes = st.text_area("Clinical Notes (Optional NLP Input)",
+        value="Patient reports fever and difficulty travelling to facility.", height=70)
 
-    if st.button("🔍 Check Access Likelihood"):
-        age_map    = {"0–4 (Infant)": "0-4", "5–14 (Child)": "5-14", "15–24 (Young Adult)": "15-24", "25–34 (Adult)": "25-34", "35–49 (Adult)": "35-49", "50–64 (Older Adult)": "50-64", "65+ (Elderly)": "65+"}
-        wealth_map = {"Very Poor": "Poorest", "Poor": "Poorer", "Middle": "Middle", "Comfortable": "Richer", "Wealthy": "Richest"}
+    if st.button("🔍  Run Access Prediction"):
         payload = {
-            "distance_km": distance_km, "age_group": age_map.get(age_group, "25-34"),
-            "gender": gender, "wealth_index": wealth_map.get(wealth_index, "Middle"),
-            "insurance_status": 1 if insurance == "Yes" else 0,
-            "residential_area_group": "Urban" if "Urban" in residence else "Rural",
-            "survey_weight": 1.0, "clinical_notes": clinical_notes
+            "distance_km":distance_km,"age_group":age_group,"gender":gender,
+            "wealth_index":wealth_index,"insurance_status":1 if insurance=="Insured" else 0,
+            "residential_area_group":residence,"survey_weight":1.0,"clinical_notes":clinical_notes
         }
         try:
-            with st.spinner("Running prediction..."):
-                response = requests.post("http://127.0.0.1:8000/predict_access", json=payload, timeout=10)
+            with st.spinner("Querying FastAPI inference engine..."):
+                response = requests.post(f"{st.session_state.api_url}/predict_access", json=payload, timeout=10)
             if response.status_code == 200:
                 result = response.json()
                 prob   = result["probability"]
                 st.markdown("---")
-                m1, m2, m3 = st.columns(3)
-                m1.metric("Likelihood of Accessing Care", f"{prob}%")
-                m2.metric("Recommendation", "✅ Likely to access" if result["prediction"] == 1 else "❌ At risk")
-                m3.metric("Distance Risk", "⚠️ High" if distance_km > 25 else "✅ Safe zone")
-                st.progress(prob / 100)
-
-                if prob >= 70:
-                    st.markdown(f'<div class="card card-accent"><b style="color:{ACCENT};">✅ Good news.</b> <span style="font-size:13px;color:{MUTED};">This patient is likely to access care. Proceed with standard referral.</span></div>', unsafe_allow_html=True)
-                elif prob >= 40:
-                    st.markdown(f'<div class="card card-gold"><b style="color:{GOLD};">⚡ Some concern.</b> <span style="font-size:13px;color:{MUTED};">This patient may face barriers. Consider calling ahead or arranging transport.</span></div>', unsafe_allow_html=True)
+                m1,m2,m3 = st.columns(3)
+                m1.metric("Access Probability", f"{prob}%")
+                m2.metric("Prediction", "Will Access ✅" if result["prediction"]==1 else "Will NOT Access ❌")
+                m3.metric("Distance Zone", ">25km ⚠️" if distance_km>25 else "Safe Zone ✅")
+                st.progress(prob/100)
+                if prob>=70:
+                    st.markdown(f'<div class="med-card-green"><b style="color:#065F46;">✅ High likelihood of access.</b></div>', unsafe_allow_html=True)
+                elif prob>=40:
+                    st.markdown(f'<div class="med-card-amber"><b style="color:#92400E;">⚡ Moderate likelihood — consider outreach support.</b></div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="card card-red"><b style="color:{RED};">🚨 High risk.</b> <span style="font-size:13px;color:{MUTED};">This patient is unlikely to access care without help. Prioritise for community health worker or mobile clinic.</span></div>', unsafe_allow_html=True)
-
-                st.markdown(f"<h3 style='margin-top:20px;'>📋 Recommended Nearby Facilities</h3>", unsafe_allow_html=True)
-                nearby = FACILITIES[FACILITIES["Dist_km"] <= distance_km + 10].sort_values("Access_pct", ascending=False).head(3)
-                for _, row in nearby.iterrows():
-                    st.markdown(f"""
-                    <div class='card'>
-                        <div style='display:flex; justify-content:space-between; align-items:center;'>
-                            <div>
-                                <div style='font-size:14px; font-weight:700; color:{HEAD};'>{row['Name']}</div>
-                                <div style='font-size:11px; color:{MUTED}; margin-top:3px;'>{row['Type']} · {row['Sector']} · {row['Dist_km']} km away</div>
-                                <div style='margin-top:6px;'>
-                                    <span class='badge badge-green'>Access: {row['Access_pct']}%</span>
-                                    <span class='badge badge-gold'>Retention: {row['Retention_pct']}%</span>
-                                    <span class='badge badge-purple'>{row['Sector']}</span>
-                                </div>
-                            </div>
-                            <a class='call-btn' href='tel:{row["Phone"]}'>📞 Call</a>
-                        </div>
-                    </div>""", unsafe_allow_html=True)
+                    st.markdown(f'<div class="med-card-red"><b style="color:#DC2626;">🚨 Low likelihood — prioritise mobile clinic or CHW intervention.</b></div>', unsafe_allow_html=True)
+                if clinical_notes and result.get("nlp_analysis",{}).get("cleaned_keywords"):
+                    st.info(f"**NLP Keywords:** {result['nlp_analysis']['cleaned_keywords']}")
             else:
-                st.error(f"Error: {response.text}")
+                st.error(f"API Error {response.status_code}")
         except requests.exceptions.ConnectionError:
-            st.error("🚨 Prediction engine not running. Start the API server first.")
-
-
-# ============================================================
-# FACILITY MAP
-# ============================================================
-elif "Map" in module:
-    st.markdown(f"<h1>🗺️ Nairobi Facility Map</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:{MUTED}; font-size:13px;'>Find hospitals near you · Call directly · Filter by sector · Plan a route</p>", unsafe_allow_html=True)
-
-    # Location planner
-    st.markdown(f'<div class="plain-box"><b>📍 Plan a Patient Journey</b><br>Enter the patient\'s current location and destination hospital to open directions in Google Maps.</div>', unsafe_allow_html=True)
-    loc1, loc2, loc3 = st.columns([2, 2, 1])
-    with loc1:
-        current_loc = st.text_input("Patient's Current Location", placeholder="e.g. Westlands, Nairobi")
-    with loc2:
-        destination = st.text_input("Destination Hospital", placeholder="e.g. Kenyatta National Hospital")
-    with loc3:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🗺️ Directions"):
-            if current_loc and destination:
-                maps_url = f"https://www.google.com/maps/dir/{current_loc.replace(' ', '+')}/{destination.replace(' ', '+')}"
-                st.markdown(f"<a href='{maps_url}' target='_blank' class='call-btn'>Open in Google Maps →</a>", unsafe_allow_html=True)
+            st.error("🚨 Cannot connect to FastAPI. Run: `.venv\\Scripts\\python.exe -m uvicorn api:app` in a separate terminal.")
+        except requests.exceptions.Timeout:
+            st.error("Request timed out.")
 
     st.markdown("---")
+    st.markdown("#### 🗺️ Nearby Facilities — Based on Patient Distance")
+    nearby = FACILITIES_DATA[FACILITIES_DATA["Dist_km"] <= max(distance_km + 10, 15)].copy()
+    si1,si2,si3 = st.columns(3)
+    si1.metric("Facilities Within Range", len(nearby))
+    si2.metric("Avg Access Rate", f"{nearby['Access_pct'].mean():.1f}%")
+    si3.metric("Paradox Facilities", int(nearby["Paradox"].sum()))
 
-    f1, f2, f3 = st.columns(3)
-    with f1: max_dist       = st.slider("Show facilities within (km)", 1, 60, 30)
-    with f2: sector_filter  = st.multiselect("Filter by Sector", ["Public", "Faith-Based", "Private"], default=["Public", "Faith-Based", "Private"])
-    with f3: show_threshold = st.checkbox("Show 25km safety zone ring", value=True)
+    m_triage = make_facility_map(nearby, show_ring=True)
+    st_folium(m_triage, width="100%", height=400)
 
-    filtered = FACILITIES[(FACILITIES["Dist_km"] <= max_dist) & (FACILITIES["Sector"].isin(sector_filter))]
+    st.markdown("#### Facility Quick Reference")
+    qref = nearby[["Name","Type","Dist_km","Access_pct","Specialties"]].copy()
+    qref.columns = ["Facility","Type","Dist (km)","Access %","Specialties Available"]
+    st.dataframe(qref, use_container_width=True, hide_index=True)
 
-    s1, s2, s3, s4 = st.columns(4)
-    s1.metric("Facilities Shown",  len(filtered))
-    s2.metric("Avg Access Rate",   f"{filtered['Access_pct'].mean():.1f}%")
-    s3.metric("Faith-Based",       int((filtered["Sector"] == "Faith-Based").sum()))
-    s4.metric("High-Risk Flagged", int(filtered["Paradox"].sum()))
 
-    m = folium.Map(location=[-1.2921, 36.8219], zoom_start=11, tiles=MAP_TILE)
+# ============================================================
+# PAGE 3 — FULL GEOSPATIAL MAPPER (original + click feature)
+# ============================================================
+elif "Mapper" in module:
+    st.markdown("## 🗺️ Geospatial Facility Mapper")
+    st.caption("Full facility map · Type legends · Specialised treatment filter · Click anywhere to find nearest facility")
 
-    if show_threshold:
-        folium.Circle(
-            location=[-1.3006, 36.8066], radius=25000,
-            color="#F5A623", weight=2, fill=True, fill_color="#F5A623", fill_opacity=0.05,
-            tooltip="25km GAM Critical Threshold"
-        ).add_to(m)
+    fc1,fc2,fc3 = st.columns([2,2,1])
+    with fc1:
+        selected_types = st.multiselect("Filter by Facility Type",
+            options=sorted(FACILITIES_DATA["Type"].unique()),
+            default=list(FACILITIES_DATA["Type"].unique()))
+    with fc2:
+        selected_spec = st.multiselect("Filter by Specialised Treatment",
+            options=ALL_SPECIALTIES, placeholder="All specialties shown")
+    with fc3:
+        max_dist  = st.slider("Max distance (km)", 1, 60, 50)
+        show_ring = st.checkbox("25km GAM ring", value=True)
 
-    for _, row in filtered.iterrows():
-        icon_color  = "red" if row["Paradox"] else SECTOR_COLORS.get(row["Sector"], "blue")
-        paradox_txt = "<br><b style='color:red;'>⚠️ Urban Paradox — patients nearby still not accessing care</b>" if row["Paradox"] else ""
-        popup_html  = f"""
-        <div style='font-family:Arial; min-width:200px;'>
-            <b style='font-size:13px;'>{row['Name']}</b><br>
-            <span style='color:#666; font-size:11px;'>{row['Type']} · {row['Sector']}</span><br><br>
-            📍 Distance: <b>{row['Dist_km']} km</b><br>
-            ✅ Access Rate: <b>{row['Access_pct']}%</b><br>
-            🔄 Retention Rate: <b>{row['Retention_pct']}%</b><br>
-            💊 Insurance Coverage: <b>{row['Insurance_pct']}%</b><br><br>
-            <a href='tel:{row["Phone"]}' style='background:#007A5A;color:white;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:bold;'>📞 Call Now</a>
-            {paradox_txt}
-        </div>"""
-        folium.Marker(
-            location=[row["Lat"], row["Lon"]],
-            tooltip=f"{row['Name']} ({row['Sector']})",
-            popup=folium.Popup(popup_html, max_width=260),
-            icon=folium.Icon(color=icon_color, icon=SECTOR_ICONS.get(row["Sector"], "medkit"), prefix="fa")
-        ).add_to(m)
+    filtered = FACILITIES_DATA[
+        (FACILITIES_DATA["Dist_km"] <= max_dist) &
+        (FACILITIES_DATA["Type"].isin(selected_types))
+    ].copy()
+    if selected_spec:
+        filtered = filtered[filtered["Specialties"].apply(
+            lambda s: any(sp in s for sp in selected_spec))]
 
-    map_data = st_folium(m, width="100%", height=460, returned_objects=["last_clicked"])
+    si1,si2,si3,si4 = st.columns(4)
+    si1.metric("Facilities in Range", len(filtered))
+    si2.metric("Avg Access Rate", f"{filtered['Access_pct'].mean():.1f}%" if len(filtered) else "—")
+    si3.metric("Paradox Facilities", int(filtered["Paradox"].sum()))
+    si4.metric("Types Shown", len(filtered["Type"].unique()))
 
-    st.markdown(f"""
-    <div style='display:flex; gap:20px; margin-top:10px; flex-wrap:wrap; font-size:12px; color:{MUTED};'>
-        <span>🔵 Public Hospital</span>
-        <span>🟣 Faith-Based / Religious Hospital</span>
-        <span>🟢 Private Hospital</span>
-        <span>🔴 High-Risk Facility (Urban Paradox)</span>
-        <span>🟡 25km Safety Zone</span>
-        <span style='color:{ACCENT};'>💡 Click anywhere on the map to find the nearest facility</span>
-    </div>""", unsafe_allow_html=True)
+    m_full = make_facility_map(filtered, show_ring=show_ring)
+    map_data = st_folium(m_full, width="100%", height=520, returned_objects=["last_clicked"])
 
-    # ── Click handler ─────────────────────────────────────────
+    # Legend
+    st.markdown("#### Map Legend — Facility Types")
+    leg_cols = st.columns(4)
+    for i,(ftype,col) in enumerate(LEGEND_COLORS.items()):
+        leg_cols[i%4].markdown(
+            f"<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;'>"
+            f"<div style='width:12px;height:12px;border-radius:50%;background:{col};flex-shrink:0;'></div>"
+            f"<span style='font-size:11px;color:{muted};'>{ftype}</span></div>",
+            unsafe_allow_html=True)
+
+    st.markdown(f"<div style='font-size:12px;color:{acc};font-weight:600;margin-top:4px;'>💡 Click anywhere on the map to find the 3 nearest facilities</div>", unsafe_allow_html=True)
+
+    # ── Click handler ──────────────────────────────────────────
     if map_data and map_data.get("last_clicked"):
-        import math
-
-        def haversine(lat1, lon1, lat2, lon2):
-            R = 6371
-            dlat = math.radians(lat2 - lat1)
-            dlon = math.radians(lon2 - lon1)
-            a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
-            return R * 2 * math.asin(math.sqrt(a))
-
         clat = map_data["last_clicked"]["lat"]
         clng = map_data["last_clicked"]["lng"]
 
-        # Distance from click to every facility
-        FACILITIES["click_dist"] = FACILITIES.apply(
+        FACILITIES_DATA["_click_dist"] = FACILITIES_DATA.apply(
             lambda r: haversine(clat, clng, r["Lat"], r["Lon"]), axis=1
         )
-        nearest = FACILITIES.nsmallest(3, "click_dist")
-        closest = nearest.iloc[0]
-
-        zone_label = f"✅ Within 25km safe zone" if closest["click_dist"] <= 25 else f"⚠️ Beyond 25km — access risk zone"
-        zone_color = ACCENT if closest["click_dist"] <= 25 else RED
+        nearest  = FACILITIES_DATA.nsmallest(3, "_click_dist")
+        closest  = nearest.iloc[0]
+        zone_ok  = closest["_click_dist"] <= 25
+        zone_lbl = "✅ Within 25km safe zone" if zone_ok else "⚠️ Beyond 25km — access risk zone"
+        zone_cls = "med-card-green" if zone_ok else "med-card-red"
+        zone_col = "#065F46" if zone_ok else "#DC2626"
 
         st.markdown(f"""
-        <div class='card' style='border-left:4px solid {zone_color}; margin-top:16px;'>
-            <div style='font-size:13px; font-weight:700; color:{zone_color}; margin-bottom:8px;'>
-                📍 You clicked at ({clat:.4f}, {clng:.4f}) — {zone_label}
-            </div>
-            <div style='font-size:12px; color:{MUTED}; margin-bottom:12px;'>
-                Distance from click to nearest facility: <b style='color:{HEAD};'>{closest['click_dist']:.1f} km</b>
-            </div>
-            <div style='font-size:12px; font-weight:700; color:{HEAD}; margin-bottom:6px;'>3 Nearest Facilities:</div>
-        """, unsafe_allow_html=True)
+        <div class='{zone_cls}' style='margin-top:16px;'>
+            <b style='color:{zone_col};'>📍 Clicked at ({clat:.4f}, {clng:.4f}) — {zone_lbl}</b><br>
+            <span style='font-size:12px;color:{muted};'>
+                Distance to nearest facility: <b style='color:{text};'>{closest['_click_dist']:.1f} km</b>
+            </span>
+        </div>""", unsafe_allow_html=True)
+
+        st.markdown(f"<div style='font-size:13px;font-weight:700;color:{text};margin:12px 0 8px;'>3 Nearest Facilities:</div>", unsafe_allow_html=True)
 
         for _, row in nearest.iterrows():
-            d = row["click_dist"]
-            d_color = ACCENT if d <= 25 else GOLD if d <= 40 else RED
-            access_badge = "badge-green" if row["Access_pct"] >= 70 else "badge-gold" if row["Access_pct"] >= 50 else "badge-red"
-            sector_badge = "badge-purple" if row["Sector"] == "Faith-Based" else "badge-green" if row["Sector"] == "Private" else "badge-sky"
+            d = row["_click_dist"]
+            d_color = "#065F46" if d<=25 else "#92400E" if d<=40 else "#DC2626"
+            a_badge = "badge-green" if row["Access_pct"]>=70 else "badge-amber" if row["Access_pct"]>=50 else "badge-red"
             st.markdown(f"""
-            <div class='card' style='margin-bottom:8px;'>
-                <div style='display:flex; justify-content:space-between; align-items:center;'>
+            <div class='med-card' style='border-left:3px solid {acc};margin-bottom:8px;'>
+                <div style='display:flex;justify-content:space-between;align-items:center;'>
                     <div>
-                        <div style='font-size:13px; font-weight:700; color:{HEAD};'>{row['Name']}</div>
-                        <div style='font-size:11px; color:{MUTED}; margin:3px 0 6px;'>{row['Type']} · {row['Sector']}</div>
-                        <span class='badge {sector_badge}'>{row['Sector']}</span>
-                        <span class='badge {access_badge}'>Access: {row['Access_pct']}%</span>
-                        <span class='badge badge-gold'>Retention: {row['Retention_pct']}%</span>
-                        {'<span class="badge badge-red">⚠️ High-Risk</span>' if row["Paradox"] else ''}
+                        <div style='font-size:14px;font-weight:700;color:{acc};'>{row['Name']}</div>
+                        <div style='font-size:11px;color:{muted};margin:3px 0 6px;'>{row['Type']}</div>
+                        <span class='{a_badge}'>Access: {row['Access_pct']}%</span>
+                        <span class='badge-amber'>Retention: {row['Retention_pct']}%</span>
+                        {'<span class="badge-red">⚠️ Paradox</span>' if row["Paradox"] else ''}
                     </div>
-                    <div style='text-align:right; min-width:130px;'>
-                        <div style='font-size:16px; font-weight:800; color:{d_color};'>{d:.1f} km</div>
-                        <div style='font-size:10px; color:{MUTED}; margin-bottom:6px;'>from your click</div>
-                        <a class='call-btn' href='tel:{row["Phone"]}'>📞 Call</a>
+                    <div style='text-align:right;min-width:100px;'>
+                        <div style='font-size:20px;font-weight:900;color:{d_color};'>{d:.1f} km</div>
+                        <div style='font-size:10px;color:{muted};'>from your click</div>
                     </div>
                 </div>
             </div>""", unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown(f"<h3 style='margin-top:24px;'>📋 Facility Directory</h3>", unsafe_allow_html=True)
-    for _, row in filtered.sort_values("Dist_km").iterrows():
-        access_badge  = "badge-red"    if row["Access_pct"] < 50 else "badge-gold" if row["Access_pct"] < 70 else "badge-green"
-        sector_badge  = "badge-purple" if row["Sector"] == "Faith-Based" else "badge-green" if row["Sector"] == "Private" else "badge-sky"
-        card_class    = "card-red" if row["Paradox"] else "card-accent"
-        st.markdown(f"""
-        <div class='card {card_class}'>
-            <div style='display:flex; justify-content:space-between; align-items:center;'>
-                <div style='flex:1;'>
-                    <div style='font-size:14px; font-weight:700; color:{HEAD};'>{row['Name']}</div>
-                    <div style='font-size:11px; color:{MUTED}; margin:4px 0 8px;'>{row['Type']} · {row['Dist_km']} km away</div>
-                    <span class='badge {sector_badge}'>{row['Sector']}</span>
-                    <span class='badge {access_badge}'>Access: {row['Access_pct']}%</span>
-                    <span class='badge badge-gold'>Retention: {row['Retention_pct']}%</span>
-                    {'<span class="badge badge-red">⚠️ High-Risk</span>' if row["Paradox"] else ''}
-                </div>
-                <div style='text-align:right; min-width:120px;'>
-                    <div style='font-size:10px; color:{MUTED}; margin-bottom:6px;'>{row["Phone"]}</div>
-                    <a class='call-btn' href='tel:{row["Phone"]}'>📞 Call Facility</a>
-                </div>
-            </div>
-        </div>""", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("#### Facility Details")
+    disp = filtered[["Name","Type","Specialties","Dist_km","Access_pct","Retention_pct","Insurance_pct","Paradox"]].copy()
+    disp.columns = ["Facility","Type","Specialties","Dist (km)","Access %","Retention %","Insurance %","⚠ Paradox"]
+    st.dataframe(disp, use_container_width=True, hide_index=True)
 
 
 # ============================================================
-# ACCESS & RETENTION
+# PAGE 4 — PATIENT RETENTION RECORD (restored exactly)
 # ============================================================
-elif "Access" in module:
-    st.markdown(f"<h1>📊 Access & Retention Rates</h1>", unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class='plain-box'>
-        <b>Access rate</b> = % of patients who successfully reach and use a health facility.<br>
-        <b>Retention rate</b> = % of patients who <i>come back</i> for follow-up care.<br>
-        A big gap between the two means patients visit once but don't return — often due to poor service quality or cost.
-    </div>""", unsafe_allow_html=True)
+elif "Retention" in module:
+    st.markdown("## 👤 Patient Retention Record")
+    st.caption("Existing patient follow-up · Visit history · Treatment continuity · Care plan status")
 
-    fac_types   = ["National Referral", "County Hospital", "Sub-County", "Health Centre", "Dispensary/Clinic"]
-    access_vals = [94, 79, 61, 52, 37]
-    ret_vals    = [89, 71, 53, 44, 30]
-    gap_vals    = [a - r for a, r in zip(access_vals, ret_vals)]
-
-    # Always-visible label colour — dark in light mode, light in dark mode
-    TICK_COL = "#FFFFFF" if st.session_state.dark_mode else "#1A1A2E"
-
-    c_l, c_r = st.columns(2)
-    with c_l:
-        st.markdown(f"<h3>Who is accessing care?</h3>", unsafe_allow_html=True)
-        fig_a = go.Figure(go.Bar(x=access_vals, y=fac_types, orientation="h",
-            marker_color=[ACCENT if v >= 50 else RED for v in access_vals],
-            text=[f"{v}%" for v in access_vals], textposition="outside",
-            textfont=dict(color=TICK_COL, size=13)))
-        fig_a.update_layout(paper_bgcolor=CARD, plot_bgcolor=CARD, height=280,
-            margin=dict(l=0, r=60, t=10, b=10),
-            xaxis=dict(showgrid=False, range=[0, 110], tickfont=dict(color=TICK_COL)),
-            yaxis=dict(tickfont=dict(color=TICK_COL, size=13)),
-            showlegend=False)
-        st.plotly_chart(fig_a, use_container_width=True)
-
-    with c_r:
-        st.markdown(f"<h3>Who is NOT coming back?</h3>", unsafe_allow_html=True)
-        fig_g = go.Figure(go.Bar(x=gap_vals, y=fac_types, orientation="h",
-            marker_color=[RED if g > 12 else GOLD if g > 8 else ACCENT for g in gap_vals],
-            text=[f"{v}pp gap" for v in gap_vals], textposition="outside",
-            textfont=dict(color=TICK_COL, size=13)))
-        fig_g.update_layout(paper_bgcolor=CARD, plot_bgcolor=CARD, height=280,
-            margin=dict(l=0, r=90, t=10, b=10),
-            xaxis=dict(showgrid=False, range=[0, 25], tickfont=dict(color=TICK_COL),
-                       title=dict(text="Access–Retention gap (pp)", font=dict(color=TICK_COL))),
-            yaxis=dict(tickfont=dict(color=TICK_COL, size=13)),
-            showlegend=False)
-        st.plotly_chart(fig_g, use_container_width=True)
-
-    st.markdown(f"""
-    <div class='card card-red'>
-        <b style='color:{RED};'>⚠️ Urban Proximity Paradox</b><br>
-        <span style='font-size:12px; color:{MUTED};'>
-        3,484 patients lived close to a hospital but still did not access care.
-        Simply building hospitals nearby is not enough — service quality, cost, and wait times must also improve.
-        </span>
-    </div>""", unsafe_allow_html=True)
-
-
-# ============================================================
-# HOW IT WORKS
-# ============================================================
-elif "Works" in module:
-    st.markdown(f"<h1>🔬 How the Prediction Works</h1>", unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class='plain-box'>
-        <b>In plain English:</b><br><br>
-        The system looks at information about a patient — like how far they live from a hospital,
-        whether they have insurance, and how wealthy their household is — and calculates the
-        <b>chance they will actually go to hospital</b> when they need care.<br><br>
-        It was trained on data from <b>99,031 real Kenyans</b>.
-    </div>""", unsafe_allow_html=True)
-
-    st.markdown(f"<h3>What matters most?</h3>", unsafe_allow_html=True)
-    cat_colors = {"Enabling": GOLD, "Predisposing": PURPLE, "Need": ACCENT}
-    fig_shap = go.Figure(go.Bar(
-        x=SHAP_DATA["Importance"]*100, y=SHAP_DATA["Plain"], orientation="h",
-        marker_color=[cat_colors[c] for c in SHAP_DATA["Category"]],
-        text=[f"{v*100:.0f}%" for v in SHAP_DATA["Importance"]], textposition="outside"))
-    fig_shap.update_layout(paper_bgcolor=CARD, plot_bgcolor=CARD, font_color=TEXT, height=340,
-        xaxis=dict(title="How much this factor influences access (%)", color=MUTED, gridcolor=BORDER, range=[0,55]),
-        yaxis=dict(color=TEXT, autorange="reversed"), margin=dict(l=10,r=60,t=10,b=10))
-    st.plotly_chart(fig_shap, use_container_width=True)
-
-    lc1, lc2, lc3 = st.columns(3)
-    for col, (title, color, desc) in zip([lc1,lc2,lc3],[
-        ("Structural Factors", GOLD,   "Distance, money, insurance — things that help or block access"),
-        ("Personal Factors",   PURPLE, "Age, gender, education, where you live"),
-        ("Health Need",        ACCENT, "Type of facility or care being sought"),
-    ]):
-        col.markdown(f'<div class="card" style="border-left:4px solid {color}; text-align:center;"><div style="font-size:11px;font-weight:700;color:{color};">{title}</div><div style="font-size:10px;color:{MUTED};margin-top:4px;line-height:1.6;">{desc}</div></div>', unsafe_allow_html=True)
-
-    st.markdown(f"<h3 style='margin-top:20px;'>📍 The 25km Rule</h3>", unsafe_allow_html=True)
-    fig_gam = go.Figure()
-    fig_gam.add_trace(go.Scatter(x=GAM_DIST, y=[p*100 for p in GAM_PROB], mode="lines+markers",
-        line=dict(color=ACCENT, width=3), marker=dict(size=7, color=ACCENT),
-        fill="tozeroy", fillcolor=f"{ACCENT}18", name="Chance of accessing care"))
-    fig_gam.add_vline(x=25, line_dash="dash", line_color=GOLD, line_width=2,
-        annotation_text="25km — access drops sharply here",
-        annotation_font_color=GOLD, annotation_position="top right")
-    fig_gam.update_layout(paper_bgcolor=CARD, plot_bgcolor=CARD, font_color=TEXT, height=300,
-        xaxis=dict(title="Distance to nearest hospital (km)", color=MUTED, gridcolor=BORDER),
-        yaxis=dict(title="Chance of accessing care (%)", color=MUTED, gridcolor=BORDER, range=[0,110]),
-        margin=dict(l=20,r=20,t=20,b=20), showlegend=False)
-    st.plotly_chart(fig_gam, use_container_width=True)
-
-    st.markdown(f"""
-    <div class='card card-gold'>
-        <b style='color:{GOLD};'>💡 What this means for hospital planning</b><br>
-        <span style='font-size:12px;color:{MUTED};'>
-        Patients can still access care up to <b>25km away</b> — but beyond that, access drops dramatically.
-        Mobile clinics and ambulance services should prioritise areas <b>beyond 25km</b>.
-        </span>
-    </div>""", unsafe_allow_html=True)
-
-
-# ============================================================
-# MODEL RESULTS
-# ============================================================
-elif "Results" in module:
-    st.markdown(f"<h1>⚙️ Model Performance Results</h1>", unsafe_allow_html=True)
-    st.caption("For supervisors and researchers · Stratified 3-Fold Cross-Validation · KNBS 2022 · n=99,031")
-
-    def style_row(row):
-        if row["Algorithm"] == "XGBoost (Best Model)":
-            return [f"background-color:{ACCENT}22; color:{ACCENT}; font-weight:700"] * len(row)
-        return [f"color:{TEXT}"] * len(row)
-
-    st.dataframe(MODEL_PERF.drop(columns=["Top"]).style.apply(style_row, axis=1),
-                 use_container_width=True, hide_index=True)
+    col_s,col_btn = st.columns([3,1])
+    with col_s:
+        pt_id = st.text_input("Search by Patient ID or National ID", placeholder="e.g.  PT-2024-00142")
+    with col_btn:
+        st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
+        st.button("Load Patient Record", use_container_width=True)
 
     st.markdown("---")
-    fig_m = go.Figure()
-    for col_name, color in [("F1", ACCENT), ("AUC", SKY), ("Accuracy", PURPLE)]:
-        fig_m.add_trace(go.Bar(name=col_name, x=MODEL_PERF["Algorithm"], y=MODEL_PERF[col_name], marker_color=color, opacity=0.85))
-    fig_m.update_layout(barmode="group", paper_bgcolor=CARD, plot_bgcolor=CARD, font_color=TEXT, height=340,
-        xaxis=dict(color=MUTED, gridcolor=BORDER, tickangle=-25),
-        yaxis=dict(color=MUTED, gridcolor=BORDER, range=[0,1.05]),
-        legend=dict(bgcolor=SURFACE, bordercolor=BORDER), margin=dict(l=10,r=10,t=10,b=80))
-    st.plotly_chart(fig_m, use_container_width=True)
+    pt = {
+        "id":"PT-2024-00142","name":"Amina Wanjiru Kariuki","dob":"14 March 1987","age":37,
+        "gender":"Female","national_id":"23456781","nhif_no":"NHIF-KE-882341",
+        "insurance":"NHIF (Active)","facility":"Mbagathi District Hospital",
+        "clinician":"Dr. P. Ochieng","blood_group":"O+","allergies":"Penicillin, Sulfonamides",
+        "phone":"+254 712 345 678","county":"Nairobi","distance_km":8.1,
+        "wealth":"Middle","residence":"Urban","access_prob":77,"retention_prob":71,
+        "next_appointment":"28 March 2026","last_visit":"12 February 2026",
+        "visits_ytd":4,"total_visits":17,
+        "conditions":["Hypertension","Type 2 Diabetes"],
+        "medications":[
+            {"Drug":"Amlodipine 5mg",   "Dose":"1 tab OD","Refill Due":"28 Mar 2026","Status":"Active"},
+            {"Drug":"Metformin 500mg",   "Dose":"1 tab BD","Refill Due":"28 Mar 2026","Status":"Active"},
+            {"Drug":"Atorvastatin 20mg","Dose":"1 tab ON","Refill Due":"28 Mar 2026","Status":"Active"},
+        ],
+        "visits":[
+            {"Date":"12 Feb 2026","Facility":"Mbagathi District Hospital","Type":"Chronic Disease Review","Clinician":"Dr. P. Ochieng","BP":"138/88","Sugar":"7.4 mmol/L","Notes":"Well-controlled. Refill issued."},
+            {"Date":"10 Jan 2026","Facility":"Mbagathi District Hospital","Type":"Routine OPD","Clinician":"Dr. P. Ochieng","BP":"142/92","Sugar":"8.1 mmol/L","Notes":"Metformin dose increased."},
+            {"Date":"05 Nov 2025","Facility":"Mbagathi District Hospital","Type":"Emergency (Hypertensive)","Clinician":"Dr. R. Njoroge","BP":"178/104","Sugar":"9.2 mmol/L","Notes":"IV antihypertensive. Admitted overnight."},
+            {"Date":"22 Sep 2025","Facility":"Ruaraka Health Centre","Type":"Chronic Disease Review","Clinician":"Sr. M. Auma","BP":"136/86","Sugar":"7.0 mmol/L","Notes":"Stable. Routine refill."},
+        ],
+        "investigations":[
+            {"Test":"HbA1c",          "Date":"12 Feb 2026","Result":"7.8%",          "Normal Range":"<7.0%",         "Flag":"⚠️ Elevated"},
+            {"Test":"Fasting Glucose","Date":"12 Feb 2026","Result":"7.4 mmol/L",    "Normal Range":"3.9–5.5 mmol/L","Flag":"⚠️ Elevated"},
+            {"Test":"Lipid Panel",    "Date":"10 Jan 2026","Result":"LDL 3.2 mmol/L","Normal Range":"<2.6 mmol/L",   "Flag":"⚠️ Borderline"},
+            {"Test":"BP",             "Date":"12 Feb 2026","Result":"138/88 mmHg",   "Normal Range":"<130/80 mmHg",  "Flag":"⚠️ Elevated"},
+            {"Test":"Renal Function", "Date":"10 Jan 2026","Result":"Creatinine 82", "Normal Range":"62–106 µmol/L", "Flag":"✅ Normal"},
+        ],
+        "referrals":[
+            {"Date":"12 Feb 2026","Referred To":"KNH — Cardiology","Reason":"Uncontrolled hypertension, cardiac risk assessment","Status":"Pending"},
+        ],
+    }
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f'<div class="card card-red"><b style="color:{RED};">⚖️ Class Imbalance</b><br><span style="font-size:11px;color:{MUTED};">Most survey respondents accessed care, so the model needed special tuning to also detect those who did not. Result: 3,484 False Positives · 5 False Negatives.</span></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown(f'<div class="card card-accent"><b style="color:{ACCENT};">✅ Why XGBoost Was Chosen</b><br><span style="font-size:11px;color:{MUTED};">Best balance of accuracy and fairness (AUC 0.6524, F1 0.9034). The combined model offered no meaningful improvement, so XGBoost alone was deployed.</span></div>', unsafe_allow_html=True)
+    st.markdown(f"""<div class='med-card' style='border-left:4px solid {acc};'>
+        <div style='display:flex;justify-content:space-between;align-items:flex-start;'>
+            <div>
+                <div style='font-size:22px;font-weight:800;color:{acc};'>{pt["name"]}</div>
+                <div style='font-size:12px;color:{muted};margin-top:4px;'>
+                    ID: <b style='color:{text};'>{pt["id"]}</b> &nbsp;·&nbsp;
+                    NID: <b style='color:{text};'>{pt["national_id"]}</b> &nbsp;·&nbsp;
+                    NHIF: <b style='color:{text};'>{pt["nhif_no"]}</b>
+                </div>
+                <div style='margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;'>
+                    <span class='badge-blue'>{pt["age"]} yrs · {pt["gender"]}</span>
+                    <span class='badge-green'>{pt["insurance"]}</span>
+                    <span class='badge-blue'>Blood: {pt["blood_group"]}</span>
+                    <span class='badge-red'>⚠ Allergies: {pt["allergies"]}</span>
+                </div>
+            </div>
+            <div style='text-align:right;'>
+                <div style='font-size:11px;color:{muted};'>Attending Facility</div>
+                <div style='font-size:13px;font-weight:700;color:{acc};'>{pt["facility"]}</div>
+                <div style='font-size:11px;color:{muted};margin-top:2px;'>{pt["clinician"]}</div>
+            </div>
+        </div>
+    </div>""", unsafe_allow_html=True)
+
+    a1,a2,a3,a4 = st.columns(4)
+    a1.metric("Access Probability",    f"{pt['access_prob']}%",   "XGBoost model")
+    a2.metric("Retention Probability", f"{pt['retention_prob']}%","Retention model")
+    a3.metric("Next Appointment",      pt["next_appointment"])
+    a4.metric("Visits YTD / Total",    f"{pt['visits_ytd']} / {pt['total_visits']}")
+
+    tab_sum,tab_vis,tab_med,tab_lab,tab_ref = st.tabs(
+        ["📋 Summary","🗓 Visit History","💊 Medications","🔬 Investigations","🔀 Referrals"])
+
+    with tab_sum:
+        c1,c2 = st.columns(2)
+        with c1:
+            st.markdown("#### Personal Details")
+            for label,val in [("Date of Birth",pt["dob"]),("County",pt["county"]),
+                ("Phone",pt["phone"]),("Residence",pt["residence"]),("Wealth Index",pt["wealth"]),
+                ("Distance to Facility",f"{pt['distance_km']} km"),("Last Visit",pt["last_visit"])]:
+                st.markdown(f"<div class='pt-row'><span class='pt-label'>{label}</span><span class='pt-value'>{val}</span></div>", unsafe_allow_html=True)
+        with c2:
+            st.markdown("#### Active Conditions")
+            for cond in pt["conditions"]:
+                st.markdown(f"<div class='med-card-blue' style='margin-bottom:8px;'><span style='font-size:13px;font-weight:600;color:#1D4ED8;'>🩺 {cond}</span></div>", unsafe_allow_html=True)
+            dist = pt["distance_km"]
+            if dist<=25:   zc,zl,zb="#065F46","✅ Safe Zone (≤25km)","#EDFBF5"
+            elif dist<=50: zc,zl,zb="#92400E","⚠️ Transition Zone","#FFFBEE"
+            else:          zc,zl,zb="#DC2626","🚨 Exclusion Zone","#FFF5F5"
+            st.markdown(f"<div style='background:{zb};border-radius:10px;padding:14px 16px;margin-top:12px;'><div style='font-size:11px;color:{muted};text-transform:uppercase;font-weight:600;'>GAM Distance Zone</div><div style='font-size:16px;font-weight:800;color:{zc};margin-top:4px;'>{zl}</div><div style='font-size:12px;color:{muted};margin-top:2px;'>{dist} km from registered facility</div></div>", unsafe_allow_html=True)
+
+    with tab_vis:
+        for v in pt["visits"]:
+            flag = "🚨" if "Emergency" in v["Type"] else "📋"
+            st.markdown(f"""<div class='med-card' style='border-left:3px solid {acc};'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <span style='font-size:13px;font-weight:700;color:{acc};'>{flag} {v["Type"]}</span>
+                    <span class='badge-grey'>{v["Clinician"]}</span>
+                </div>
+                <div style='font-size:11px;color:{muted};margin-top:3px;'>{v["Date"]} · {v["Facility"]}</div>
+                <div style='font-size:12px;color:{muted};margin-top:6px;'>BP: <b style='color:{text};'>{v["BP"]}</b> &nbsp; BGL: <b style='color:{text};'>{v["Sugar"]}</b></div>
+                <div style='font-size:12px;color:{muted};margin-top:4px;'>{v["Notes"]}</div>
+            </div>""", unsafe_allow_html=True)
+
+    with tab_med:
+        for med in pt["medications"]:
+            st.markdown(f"""<div class='med-card' style='display:flex;justify-content:space-between;'>
+                <div><div style='font-size:14px;font-weight:700;color:{acc};'>💊 {med["Drug"]}</div>
+                <div style='font-size:12px;color:{muted};margin-top:3px;'>Dose: <b style='color:{text};'>{med["Dose"]}</b></div></div>
+                <div style='text-align:right;'>
+                    <div style='font-size:11px;color:{muted};'>Refill Due</div>
+                    <div style='font-size:13px;font-weight:700;color:{acc};'>{med["Refill Due"]}</div>
+                    <span class='badge-green'>{med["Status"]}</span>
+                </div>
+            </div>""", unsafe_allow_html=True)
+
+    with tab_lab:
+        st.dataframe(pd.DataFrame(pt["investigations"]), use_container_width=True, hide_index=True)
+
+    with tab_ref:
+        for ref in pt["referrals"]:
+            st.markdown(f"""<div class='med-card-blue'>
+                <div style='font-size:13px;font-weight:700;color:#1D4ED8;'>🔀 {ref["Referred To"]}</div>
+                <div style='font-size:12px;color:{muted};margin-top:4px;'>Date: <b style='color:{text};'>{ref["Date"]}</b> &nbsp;·&nbsp; Status: <span class='badge-amber'>{ref["Status"]}</span></div>
+                <div style='font-size:12px;color:{muted};margin-top:6px;'>{ref["Reason"]}</div>
+            </div>""", unsafe_allow_html=True)
+
+
+# ============================================================
+# PAGE 5 — DISTANCE DECAY (GAM)
+# ============================================================
+elif "Decay" in module:
+    st.markdown("## 📍 Distance Decay — GAM Analysis")
+    st.caption("Generalised Additive Model spline · Critical inflection at 25km · KNBS 2022")
+
+    fig = go.Figure()
+    safe_dist   = [d for d in GAM_DIST if d<=25]
+    safe_prob   = [p for d,p in zip(GAM_DIST,GAM_PROB) if d<=25]
+    danger_dist = [d for d in GAM_DIST if d>=25]
+    danger_prob = [p for d,p in zip(GAM_DIST,GAM_PROB) if d>=25]
+
+    fig.add_trace(go.Scatter(x=safe_dist+[25],y=safe_prob+[0.76],
+        fill="tozeroy",fillcolor="rgba(16,185,129,0.10)",
+        line=dict(color="rgba(0,0,0,0)"),showlegend=False))
+    fig.add_trace(go.Scatter(x=danger_dist,y=danger_prob,
+        fill="tozeroy",fillcolor="rgba(239,68,68,0.08)",
+        line=dict(color="rgba(0,0,0,0)"),showlegend=False))
+    fig.add_trace(go.Scatter(x=GAM_DIST,y=GAM_PROB,
+        mode="lines+markers",line=dict(color=acc,width=3),
+        marker=dict(size=7,color=acc),
+        name="P(Access | Distance)",hovertemplate="Distance: %{x}km<br>Access Prob: %{y:.0%}"))
+    fig.add_vline(x=25,line_dash="dash",line_color="#F59E0B",line_width=2,
+        annotation_text="25km Inflection",annotation_font_color="#F59E0B",annotation_position="top right")
+    fig.add_trace(go.Scatter(x=[25],y=[0.76],mode="markers",
+        marker=dict(size=12,color="#F59E0B",symbol="circle"),
+        name="Critical Inflection",hovertemplate="25km → 76% access probability"))
+    fig.update_layout(paper_bgcolor=card,plot_bgcolor=card,font_color=text,height=420,
+        xaxis=dict(title="Distance to Nearest Facility (km)",color=muted,gridcolor=border,linecolor=border,
+                   tickfont=dict(color=TICK_COL)),
+        yaxis=dict(title="Probability of Accessing Care",tickformat=".0%",color=muted,gridcolor=border,
+                   tickfont=dict(color=TICK_COL)),
+        legend=dict(bgcolor=card,bordercolor=border),margin=dict(l=20,r=20,t=20,b=20))
+    st.plotly_chart(fig, use_container_width=True)
+
+    c1,c2,c3 = st.columns(3)
+    with c1: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>0–25km · Safe Zone</b><br><span style='font-size:11px;color:{muted};'>Access probability 76–96%. Effective catchment for standard facility deployment and ambulance dispatch.</span></div>""", unsafe_allow_html=True)
+    with c2: st.markdown(f"""<div class='med-card-amber'><b style='color:#92400E;'>25km · Critical Inflection</b><br><span style='font-size:11px;color:{muted};'>GAM-derived empirical threshold. Evidence base for mobile clinic deployment radius and policy recalibration.</span></div>""", unsafe_allow_html=True)
+    with c3: st.markdown(f"""<div class='med-card-red'><b style='color:#DC2626;'>&gt;25km · Danger Zone</b><br><span style='font-size:11px;color:{muted};'>Access drops precipitously toward zero. Priority zone for mobile health unit deployment and transport subsidies.</span></div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""<div class='med-card-blue' style='margin-top:16px;'>
+        <b style='color:#1D4ED8;'>📋 Policy Implication (Ministry of Health)</b><br>
+        <span style='font-size:12px;color:{muted};'>The 25km catchment standard should supplement the linear 5km buffer currently used in epidemiological planning. Mobile clinic deployment and ambulance dispatch radius should be recalibrated to this empirically derived GAM threshold.</span>
+    </div>""", unsafe_allow_html=True)
+
+
+# ============================================================
+# PAGE 6 — ANALYTICS & VISUALS
+# ============================================================
+elif "Analytics" in module:
+    st.markdown("## 📈 Analytics & Model Visuals")
+    st.caption("SHAP feature importance · Algorithm tournament · Model performance comparison")
+
+    vtab1,vtab2 = st.tabs(["🧠 SHAP Interpretability","⚙️ Model Performance"])
+
+    with vtab1:
+        col_chart,col_insight = st.columns([3,2])
+        with col_chart:
+            cat_colors = {"Enabling":"#F59E0B","Predisposing":"#6366F1","Need":"#10B981"}
+            bar_colors = [cat_colors[c] for c in SHAP_DATA["Category"]]
+            fig_shap = go.Figure(go.Bar(
+                x=SHAP_DATA["Importance"]*100, y=SHAP_DATA["Feature"],
+                orientation="h", marker_color=bar_colors,
+                text=[f"{v*100:.0f}%" for v in SHAP_DATA["Importance"]],
+                textposition="outside",
+                textfont=dict(color=TICK_COL, size=12),
+                hovertemplate="%{y}<br>Importance: %{x:.1f}%<extra></extra>"
+            ))
+            fig_shap.update_layout(paper_bgcolor=card,plot_bgcolor=card,height=340,
+                xaxis=dict(title="SHAP Importance (%)",tickfont=dict(color=TICK_COL),gridcolor=border,range=[0,55]),
+                yaxis=dict(tickfont=dict(color=TICK_COL,size=12),autorange="reversed"),
+                margin=dict(l=10,r=60,t=10,b=10))
+            st.plotly_chart(fig_shap, use_container_width=True)
+            lcols = st.columns(3)
+            for i,(cat,col) in enumerate(cat_colors.items()):
+                total = SHAP_DATA[SHAP_DATA["Category"]==cat]["Importance"].sum()*100
+                lcols[i].markdown(f"""<div style='background:{col}18;border:1px solid {col}40;border-radius:8px;padding:8px 12px;text-align:center;'>
+                    <div style='font-size:10px;color:{col};font-weight:700;text-transform:uppercase;'>{cat}</div>
+                    <div style='font-size:20px;font-weight:900;color:{col};'>{total:.0f}%</div>
+                    <div style='font-size:10px;color:{muted};'>combined weight</div>
+                </div>""", unsafe_allow_html=True)
+        with col_insight:
+            st.markdown(f"""
+            <div class='med-card-amber' style='margin-bottom:12px;'>
+                <b style='color:#92400E;'>🎯 Dominant Signal: Distance</b><br>
+                <span style='font-size:11px;color:{muted};'>Distance_km drives 41% of model decisions — more than all socioeconomic features combined. Validates the 25km GAM threshold.</span>
+            </div>
+            <div class='med-card-blue' style='margin-bottom:12px;'>
+                <b style='color:#1D4ED8;'>💰 Enabling: 73% Combined</b><br>
+                <span style='font-size:11px;color:{muted};'>Distance + Wealth + Insurance = 73% of model weight. Targeting all three simultaneously yields the highest policy ROI.</span>
+            </div>
+            <div class='med-card-green'>
+                <b style='color:#065F46;'>👤 Predisposing: 25%</b><br>
+                <span style='font-size:11px;color:{muted};'>Residence type (urban vs rural) is the strongest predisposing signal. Education and age have smaller but consistent contributions.</span>
+            </div>""", unsafe_allow_html=True)
+
+    with vtab2:
+        def style_row(row):
+            if row["Algorithm"]=="XGBoost (Optimised)":
+                return [f"background-color:{card_b};color:{acc};font-weight:600"]*len(row)
+            return [f"color:{text}"]*len(row)
+        display = MODEL_PERF.drop(columns=["Operational"])
+        st.dataframe(display.style.apply(style_row,axis=1), use_container_width=True, hide_index=True)
+        st.markdown("---")
+        fig_m = go.Figure()
+        for col_name,color in [("F1",acc),("AUC","#0891B2"),("Accuracy","#6366F1")]:
+            fig_m.add_trace(go.Bar(name=col_name,x=MODEL_PERF["Algorithm"],y=MODEL_PERF[col_name],
+                marker_color=color,opacity=0.85))
+        fig_m.update_layout(barmode="group",paper_bgcolor=card,plot_bgcolor=card,height=350,
+            xaxis=dict(tickfont=dict(color=TICK_COL),gridcolor=border,tickangle=-25),
+            yaxis=dict(tickfont=dict(color=TICK_COL),gridcolor=border,range=[0,1.05]),
+            legend=dict(bgcolor=card,bordercolor=border),margin=dict(l=10,r=10,t=10,b=80))
+        st.plotly_chart(fig_m, use_container_width=True)
+        c1,c2 = st.columns(2)
+        with c1: st.markdown(f"""<div class='med-card-red'><b style='color:#DC2626;'>⚖️ Class Imbalance</b><br><span style='font-size:11px;color:{muted};'>scale_pos_weight corrects heavy skew. Result: 3,484 FPs (Urban Proximity Paradox) · 5 FNs.</span></div>""", unsafe_allow_html=True)
+        with c2: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>✅ Why XGBoost</b><br><span style='font-size:11px;color:{muted};'>Highest single-model AUC (0.6524). Ensemble marginally stabilised variance without material gain — XGBoost selected for deployment.</span></div>""", unsafe_allow_html=True)
+
+
+# ============================================================
+# PAGE 7 — FAQ & HOW IT WORKS
+# ============================================================
+elif "FAQ" in module:
+    st.markdown("## ❓ FAQ & How It Works")
+    st.caption("Plain-English guide to the HealthLink Kenya platform and the research behind it")
+
+    faqs = [
+        ("What does this dashboard do?",
+         f"HealthLink Kenya is a clinical decision-support tool that helps hospital administrators and referral coordinators decide <b>where to send patients</b> when they need care. It uses a machine learning model trained on data from <b>99,031 real Kenyans</b> to predict whether a patient is likely to access healthcare — and identifies which nearby hospitals are best suited for referral."),
+        ("Who is this tool designed for?",
+         "Hospital administrators, referral coordinators, community health workers, health planners at county and national level, and researchers studying healthcare access in Kenya."),
+        ("What is the 25km rule?",
+         "Research using a Generalised Additive Model (GAM) found a <b>critical inflection point at 25km</b>. Access probability is 96% at 0km and 76% at 25km — then drops sharply to near zero beyond 60km. This finding challenges the traditional 5km epidemiological buffer and provides an evidence base for mobile clinic deployment radius."),
+        ("What is the Urban Proximity Paradox?",
+         "3,484 patients who lived <b>close to a hospital</b> still failed to access care. This means distance alone doesn't explain non-utilisation — hidden barriers like long wait times, indirect costs, poor perceived service quality, and transport difficulties also play a critical role."),
+        ("How does the Access Prediction work?",
+         "The <b>Triage</b> module uses an XGBoost model serialised as a .pkl file and served via a FastAPI endpoint. You enter patient demographics and enabling factors (distance, wealth, insurance) and the model returns a probability score (0–100%) indicating the likelihood of that patient accessing care."),
+        ("What is the Andersen Behavioural Model?",
+         "This is the theoretical framework underpinning the research. It categorises factors affecting healthcare access into three groups: <b>Enabling</b> (distance, wealth, insurance — 73% of model weight), <b>Predisposing</b> (age, gender, education, residence — 25%), and <b>Need</b> (provider type — 2%)."),
+        ("Why was XGBoost selected as the operational model?",
+         "XGBoost achieved the highest ROC-AUC (0.6524) and matched the best F1-score (0.9034) among all seven algorithms tested. A combined ensemble of the top three models offered no statistically meaningful improvement, so the simpler single XGBoost model was selected for FastAPI deployment."),
+        ("What does SHAP mean?",
+         "<b>SHAP (SHapley Additive exPlanations)</b> is a technique that explains <i>why</i> the model made a specific prediction by showing how much each feature contributed. In this study, TreeSHAP was applied to the XGBoost model to show that distance contributes 41% of the model's decision-making — more than all socioeconomic variables combined."),
+        ("How do I run this locally?",
+         "You need two terminals open at the same time. <b>Terminal 1:</b> navigate to the project folder, activate the virtual environment, then run <code>.venv\\Scripts\\python.exe -m uvicorn api:app --reload</code>. <b>Terminal 2:</b> run <code>.venv\\Scripts\\python.exe -m streamlit run dashboard.py</code>. The dashboard opens at http://localhost:8501."),
+        ("Can I update the dashboard after deployment?",
+         "Yes. The dashboard is deployed on Streamlit Cloud and connected to a GitHub repository. Any changes pushed to GitHub via GitHub Desktop are automatically deployed within 2 minutes. No restart required."),
+    ]
+
+    for q, a in faqs:
+        with st.expander(f"❓  {q}"):
+            st.markdown(f"<div style='font-size:13px;color:{muted};line-height:1.9;padding:4px 0;'>{a}</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown(f"""<div class='med-card-blue'>
+        <b style='color:#1D4ED8;'>ℹ️ Research Reference</b><br>
+        <span style='font-size:12px;color:{muted};line-height:2.2;'>
+        <b>Title:</b> A Data-Driven Framework for Identifying Accessible Healthcare Providers: A Decision-Support Dashboard for Hospital Referral Planning in Kenya<br>
+        <b>Author:</b> Rutendo Julia Kandeya (ID: 168332)<br>
+        <b>Institution:</b> Strathmore University · MSc Data Science &amp; Analytics · 2026<br>
+        <b>Supervisor:</b> Dr. Esther Khakata<br>
+        <b>Dataset:</b> KNBS Health-Seeking Behaviour Survey 2022 · n = 99,031
+        </span>
+    </div>""", unsafe_allow_html=True)
+
+
+# ============================================================
+# PAGE 8 — SETTINGS
+# ============================================================
+elif "Settings" in module:
+    st.markdown("## ⚙️ Dashboard Settings")
+    st.caption("Personalise your HealthLink Kenya experience")
+
+    s1,s2 = st.columns(2)
+    with s1:
+        st.markdown(f"<div class='med-card'>", unsafe_allow_html=True)
+        st.markdown("#### 🎨 Appearance")
+        new_theme = st.radio("Colour Theme", ["light","dark"],
+            index=0 if st.session_state.theme=="light" else 1, horizontal=True)
+        accent_options = {
+            "Navy Blue (#0B3D6E)":    "#0B3D6E",
+            "Teal (#0891B2)":         "#0891B2",
+            "Forest Green (#065F46)": "#065F46",
+            "Deep Purple (#5B21B6)":  "#5B21B6",
+            "Crimson (#B91C1C)":      "#B91C1C",
+        }
+        new_accent_label = st.selectbox("Accent Colour",
+            options=list(accent_options.keys()),
+            index=list(accent_options.values()).index(st.session_state.accent)
+                if st.session_state.accent in accent_options.values() else 0)
+        new_font = st.radio("Font Size", ["Small","Medium","Large"],
+            index=["Small","Medium","Large"].index(st.session_state.font_size), horizontal=True)
+        if st.button("Apply Appearance Settings", use_container_width=True):
+            st.session_state.theme     = new_theme
+            st.session_state.accent    = accent_options[new_accent_label]
+            st.session_state.font_size = new_font
+            st.success("✅ Appearance updated — refreshing...")
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with s2:
+        st.markdown(f"<div class='med-card'>", unsafe_allow_html=True)
+        st.markdown("#### 🗺️ Map Settings")
+        map_options = ["CartoDB positron","CartoDB dark_matter","OpenStreetMap","Stamen Terrain"]
+        new_map = st.selectbox("Map Tile Style", map_options,
+            index=map_options.index(st.session_state.map_style)
+                if st.session_state.map_style in map_options else 0)
+        new_paradox = st.checkbox("Highlight Urban Proximity Paradox facilities in red",
+            value=st.session_state.show_paradox)
+        st.markdown("#### 🔌 API Configuration")
+        new_api = st.text_input("FastAPI Base URL", value=st.session_state.api_url)
+        if st.button("Save Map & API Settings", use_container_width=True):
+            st.session_state.map_style    = new_map
+            st.session_state.show_paradox = new_paradox
+            st.session_state.api_url      = new_api
+            st.success("✅ Settings saved.")
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown(f"<div class='med-card'>", unsafe_allow_html=True)
+    st.markdown("#### 👤 Account Information")
+    ac1,ac2,ac3 = st.columns(3)
+    ac1.metric("Logged in as", user.get("name","—"))
+    ac2.metric("Role",         user.get("role","—"))
+    ac3.metric("Session",      datetime.now().strftime("%d %b %Y · %H:%M"))
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(f"""<div class='med-card-blue' style='margin-top:12px;'>
+        <b style='color:#1D4ED8;'>ℹ️ About HealthLink Kenya v3.0</b><br>
+        <span style='font-size:12px;color:{muted};'>
+        MSc Data Science &amp; Analytics · Strathmore University · 2026<br>
+        Model: XGBoost · Data: KNBS Health-Seeking Behaviour Survey 2022 · n = 99,031<br>
+        Researcher: Rutendo Julia Kandeya (168332) · Supervisor: Dr. Esther Khakata
+        </span>
+    </div>""", unsafe_allow_html=True)
