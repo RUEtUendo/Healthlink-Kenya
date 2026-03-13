@@ -187,18 +187,17 @@ if not st.session_state.authenticated:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    col_l, col_c, col_r = st.columns([1, 1.4, 1])
+    col_l, col_c, col_r = st.columns([1, 1.6, 1])
     with col_c:
-        mode_tab = st.radio("", ["🔑  Sign In", "📝  Create Account"],
-                            horizontal=True, label_visibility="collapsed")
-        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        tab_signin, tab_signup = st.tabs(["🔑  Sign In", "📝  Create Account"])
 
-        if "Sign In" in mode_tab:
+        with tab_signin:
+            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             st.markdown("<div class='login-card'>", unsafe_allow_html=True)
             st.markdown(f"<h3 style='text-align:center;margin-bottom:20px;color:{acc};'>Sign In to Your Account</h3>", unsafe_allow_html=True)
-            email    = st.text_input("Email Address", placeholder="you@healthlink.ke")
-            password = st.text_input("Password", type="password", placeholder="Enter password")
-            if st.button("Sign In", use_container_width=True):
+            email    = st.text_input("Email Address", placeholder="you@healthlink.ke", key="si_email")
+            password = st.text_input("Password", type="password", placeholder="Enter password", key="si_pw")
+            if st.button("Sign In", use_container_width=True, key="si_btn"):
                 hashed = hashlib.sha256(password.encode()).hexdigest()
                 if email in DEMO_USERS and DEMO_USERS[email]["pw"] == hashed:
                     st.session_state.authenticated = True
@@ -215,24 +214,58 @@ if not st.session_state.authenticated:
                 planner@healthlink.ke · <i>Plan2024!</i>
             </div>""", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
-        else:
+
+        with tab_signup:
+            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-            st.markdown(f"<h3 style='text-align:center;margin-bottom:20px;color:{acc};'>Create an Account</h3>", unsafe_allow_html=True)
-            new_name     = st.text_input("Full Name", placeholder="Dr. Jane Njoroge")
-            new_email    = st.text_input("Institutional Email", placeholder="you@hospital.ke")
-            new_role     = st.selectbox("Role", ["Clinician","Nurse","Health Planner","Administrator","Research Officer"])
-            new_facility = st.text_input("Facility / Organisation", placeholder="Kenyatta National Hospital")
-            new_pw       = st.text_input("Password", type="password", placeholder="Create a strong password")
-            new_pw2      = st.text_input("Confirm Password", type="password", placeholder="Repeat password")
-            if st.button("Create Account", use_container_width=True):
-                if not all([new_name, new_email, new_pw]):
-                    st.warning("Please fill in all required fields.")
+            st.markdown(f"<h3 style='text-align:center;margin-bottom:20px;color:{acc};'>Create Your Profile</h3>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size:11px;font-weight:700;color:{muted};text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;'>Personal Information</div>", unsafe_allow_html=True)
+            su_c1, su_c2 = st.columns(2)
+            with su_c1:
+                new_fname    = st.text_input("First Name", placeholder="Jane", key="su_fname")
+                new_gender   = st.selectbox("Gender", ["Female","Male","Prefer not to say"], key="su_gender")
+                new_phone    = st.text_input("Phone Number", placeholder="+254 7XX XXX XXX", key="su_phone")
+            with su_c2:
+                new_lname    = st.text_input("Last Name", placeholder="Njoroge", key="su_lname")
+                new_dob      = st.text_input("Date of Birth", placeholder="DD/MM/YYYY", key="su_dob")
+                new_county   = st.selectbox("County", [
+                    "Nairobi","Mombasa","Kisumu","Nakuru","Eldoret/Uasin Gishu",
+                    "Kiambu","Machakos","Nyeri","Meru","Kakamega","Other"
+                ], key="su_county")
+
+            st.markdown(f"<div style='font-size:11px;font-weight:700;color:{muted};text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;'>Professional Details</div>", unsafe_allow_html=True)
+            new_email    = st.text_input("Institutional Email", placeholder="you@hospital.ke", key="su_email")
+            new_role     = st.selectbox("Role", ["Clinician","Nurse","Health Planner","Administrator","Research Officer","Community Health Worker"], key="su_role")
+            su_c3, su_c4 = st.columns(2)
+            with su_c3:
+                new_facility = st.text_input("Facility / Organisation", placeholder="Kenyatta National Hospital", key="su_facility")
+                new_cadre    = st.selectbox("Clinical Cadre", ["Medical Officer","Registered Nurse","Clinical Officer","Public Health Officer","Administrator","Researcher","Other"], key="su_cadre")
+            with su_c4:
+                new_dept     = st.text_input("Department / Unit", placeholder="e.g. Emergency, Maternity", key="su_dept")
+                new_yrs      = st.selectbox("Years of Experience", ["<1 year","1–3 years","3–5 years","5–10 years","10+ years"], key="su_yrs")
+            new_nhif     = st.text_input("NHIF / Insurance Number (optional)", placeholder="NHIF-KE-XXXXXXX", key="su_nhif")
+
+            st.markdown(f"<div style='font-size:11px;font-weight:700;color:{muted};text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;'>Account Security</div>", unsafe_allow_html=True)
+            su_c5, su_c6 = st.columns(2)
+            with su_c5:
+                new_pw  = st.text_input("Password", type="password", placeholder="Min. 8 characters", key="su_pw")
+            with su_c6:
+                new_pw2 = st.text_input("Confirm Password", type="password", placeholder="Repeat password", key="su_pw2")
+
+            if st.button("Create My Profile", use_container_width=True, key="su_btn"):
+                full_name = f"{new_fname} {new_lname}".strip()
+                if not all([new_fname, new_lname, new_email, new_pw]):
+                    st.warning("Please fill in all required fields (marked above).")
                 elif new_pw != new_pw2:
                     st.error("Passwords do not match.")
                 elif len(new_pw) < 8:
                     st.error("Password must be at least 8 characters.")
+                elif "@" not in new_email:
+                    st.error("Please enter a valid email address.")
                 else:
-                    st.success(f"✅ Account created for {new_name}. Please sign in.")
+                    st.success(f"✅ Profile created for {full_name} · {new_role} · {new_facility or 'No facility specified'}. Please sign in using the Sign In tab.")
+                    st.info("💡 Note: In this demo, use the demo accounts to sign in. Your registration details have been recorded.")
             st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
@@ -673,10 +706,63 @@ elif "Mapper" in module:
             </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown("#### Facility Details")
-    disp = filtered[["Name","Type","Specialties","Dist_km","Access_pct","Retention_pct","Insurance_pct","Paradox"]].copy()
-    disp.columns = ["Facility","Type","Specialties","Dist (km)","Access %","Retention %","Insurance %","⚠ Paradox"]
-    st.dataframe(disp, use_container_width=True, hide_index=True)
+    st.markdown(f"<h3 style='color:{text};'>📋 Facility Directory</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:12px;color:{muted};margin-bottom:12px;'>Click 📞 to call directly · Click 🧭 to open GPS directions from your location</p>", unsafe_allow_html=True)
+
+    for _, row in filtered.sort_values("Dist_km").iterrows():
+        a_badge   = "badge-green" if row["Access_pct"]>=70 else "badge-amber" if row["Access_pct"]>=50 else "badge-red"
+        r_badge   = "badge-green" if row["Retention_pct"]>=70 else "badge-amber" if row["Retention_pct"]>=50 else "badge-red"
+        t_badge   = "badge-blue"
+        p_flag    = f"<span class='badge-red'>⚠️ Urban Paradox</span>" if row["Paradox"] else ""
+        card_cls  = "med-card-red" if row["Paradox"] else "med-card"
+        gps_url   = f"https://www.google.com/maps/dir/?api=1&destination={row['Lat']},{row['Lon']}&travelmode=driving"
+        maps_view = f"https://www.google.com/maps/search/?api=1&query={row['Lat']},{row['Lon']}"
+
+        st.markdown(f"""
+        <div class='{card_cls}' style='border-left:4px solid {acc};margin-bottom:14px;'>
+            <div style='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;'>
+
+                <div style='flex:1;min-width:220px;'>
+                    <div style='font-size:15px;font-weight:800;color:{acc};margin-bottom:3px;'>{row['Name']}</div>
+                    <div style='font-size:11px;color:{muted};margin-bottom:8px;'>
+                        {row['Type']} &nbsp;·&nbsp; {row['Dist_km']} km from KNH reference point &nbsp;·&nbsp; {row['Beds']} beds
+                    </div>
+                    <div style='margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px;'>
+                        <span class='{t_badge}'>{row['Sector']}</span>
+                        <span class='{a_badge}'>Access: {row['Access_pct']}%</span>
+                        <span class='{r_badge}'>Retention: {row['Retention_pct']}%</span>
+                        <span class='badge-grey'>Insurance: {row['Insurance_pct']}%</span>
+                        {p_flag}
+                    </div>
+                    <div style='font-size:11px;color:{muted};line-height:1.7;'>
+                        <b style='color:{text};'>Specialties:</b> {row['Specialties']}
+                    </div>
+                </div>
+
+                <div style='display:flex;flex-direction:column;gap:8px;min-width:140px;align-items:flex-end;'>
+                    <a href='tel:{row["Phone"]}'
+                       style='display:flex;align-items:center;gap:6px;background:{acc};color:#FFFFFF;
+                              padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;
+                              text-decoration:none;width:130px;justify-content:center;'>
+                        📞 Call Facility
+                    </a>
+                    <a href='{gps_url}' target='_blank'
+                       style='display:flex;align-items:center;gap:6px;background:#10B981;color:#FFFFFF;
+                              padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;
+                              text-decoration:none;width:130px;justify-content:center;'>
+                        🧭 Get Directions
+                    </a>
+                    <a href='{maps_view}' target='_blank'
+                       style='display:flex;align-items:center;gap:6px;background:{"#21262D" if is_dark else "#F0F4FA"};
+                              color:{text};padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;
+                              text-decoration:none;width:130px;justify-content:center;border:1px solid {border};'>
+                        🗺️ View on Map
+                    </a>
+                    <div style='font-size:10px;color:{muted};text-align:right;margin-top:2px;'>{row['Phone']}</div>
+                </div>
+
+            </div>
+        </div>""", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -869,7 +955,7 @@ elif "Analytics" in module:
     st.markdown("## 📈 Analytics & Model Visuals")
     st.caption("SHAP feature importance · Algorithm tournament · Model performance comparison")
 
-    vtab1,vtab2 = st.tabs(["🧠 SHAP Interpretability","⚙️ Model Performance"])
+    vtab1,vtab2 = st.tabs(["SHAP Interpretability","⚙️ Model Performance"])
 
     with vtab1:
         col_chart,col_insight = st.columns([3,2])
