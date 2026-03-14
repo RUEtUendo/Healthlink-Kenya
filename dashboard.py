@@ -183,7 +183,7 @@ if not st.session_state.authenticated:
         <div style='font-size:56px;'>⚕️</div>
         <div style='font-size:30px; font-weight:800; color:{acc}; margin-top:8px;'>HealthLink Kenya</div>
         <div style='font-size:14px; color:{muted}; margin-top:6px; font-weight:500;'>
-            Clinical Decision-Support Platform · Hospital Referral System
+            A Predictive Framework for Healthcare Access and Referral Planning
         </div>
     </div>""", unsafe_allow_html=True)
 
@@ -273,30 +273,30 @@ if not st.session_state.authenticated:
 # DATA
 # ============================================================
 FACILITIES_DATA = pd.DataFrame([
-    {"Name":"Kenyatta National Hospital",   "Type":"National Referral Hospital",    "Specialties":"Oncology, Cardiology, Neurology, Trauma, Burns, Transplant",         "Dist_km":0,    "Insurance_pct":91,"Wealth":"Highest","Access_pct":94,"Retention_pct":89,"Lat":-1.3006,"Lon":36.8066,"Paradox":False,"Beds":1800},
-    {"Name":"Pumwani Maternity Hospital",   "Type":"County Hospital",               "Specialties":"Maternity, Neonatal ICU, Gynaecology",                               "Dist_km":4.2,  "Insurance_pct":62,"Wealth":"Middle", "Access_pct":81,"Retention_pct":74,"Lat":-1.2841,"Lon":36.8458,"Paradox":False,"Beds":320},
-    {"Name":"Mathare North HC",             "Type":"Health Centre",                 "Specialties":"General OPD, Maternal Health, Immunisation",                         "Dist_km":6.8,  "Insurance_pct":31,"Wealth":"Lowest", "Access_pct":48,"Retention_pct":44,"Lat":-1.2611,"Lon":36.8590,"Paradox":True, "Beds":40},
-    {"Name":"Mbagathi District Hospital",   "Type":"County Hospital",               "Specialties":"General Surgery, Infectious Disease, Psychiatry, Paediatrics",        "Dist_km":8.1,  "Insurance_pct":55,"Wealth":"Middle", "Access_pct":77,"Retention_pct":71,"Lat":-1.3217,"Lon":36.7680,"Paradox":False,"Beds":260},
-    {"Name":"Kayole Sub-County Hospital",   "Type":"Sub-County Hospital",           "Specialties":"Emergency, Maternity, General OPD, Eye Clinic",                      "Dist_km":12.4, "Insurance_pct":28,"Wealth":"Second", "Access_pct":43,"Retention_pct":38,"Lat":-1.2718,"Lon":36.9001,"Paradox":True, "Beds":120},
-    {"Name":"Ruaraka Health Centre",        "Type":"Clinic",                        "Specialties":"General OPD, Family Planning, HIV/ART",                              "Dist_km":15.0, "Insurance_pct":44,"Wealth":"Middle", "Access_pct":65,"Retention_pct":59,"Lat":-1.2488,"Lon":36.8756,"Paradox":False,"Beds":20},
-    {"Name":"Dandora Dispensary",           "Type":"Dispensary",                    "Specialties":"Basic Primary Care, Immunisation, Wound Care",                       "Dist_km":18.3, "Insurance_pct":19,"Wealth":"Lowest", "Access_pct":37,"Retention_pct":30,"Lat":-1.2595,"Lon":36.9087,"Paradox":True, "Beds":10},
-    {"Name":"Kangemi Health Centre",        "Type":"Health Centre",                 "Specialties":"General OPD, Maternal Health, TB/DOTS, Dental",                      "Dist_km":21.1, "Insurance_pct":33,"Wealth":"Second", "Access_pct":55,"Retention_pct":48,"Lat":-1.2724,"Lon":36.7369,"Paradox":False,"Beds":35},
-    {"Name":"Nairobi West Hospital",        "Type":"Religious / Mission Hospital",  "Specialties":"Oncology, Orthopaedics, Cardiology, Dialysis, ICU",                  "Dist_km":9.5,  "Insurance_pct":74,"Wealth":"Fourth", "Access_pct":82,"Retention_pct":76,"Lat":-1.3146,"Lon":36.8100,"Paradox":False,"Beds":200},
-    {"Name":"Aga Khan University Hospital", "Type":"Private Hospital",              "Specialties":"Neurosurgery, Oncology, Cardiology, Transplant, MRI/CT",             "Dist_km":3.1,  "Insurance_pct":96,"Wealth":"Highest","Access_pct":91,"Retention_pct":88,"Lat":-1.2702,"Lon":36.8074,"Paradox":False,"Beds":250},
-    {"Name":"Limuru Sub-County Hospital",   "Type":"Sub-County Hospital",           "Specialties":"General Surgery, Maternity, Emergency",                              "Dist_km":31.7, "Insurance_pct":47,"Wealth":"Middle", "Access_pct":31,"Retention_pct":26,"Lat":-1.1140,"Lon":36.6480,"Paradox":False,"Beds":80},
-    {"Name":"Thika Level 5 Hospital",       "Type":"County Referral Hospital",      "Specialties":"Oncology, Dialysis, Orthopaedics, ICU, Cardiology",                  "Dist_km":44.2, "Insurance_pct":52,"Wealth":"Fourth", "Access_pct":24,"Retention_pct":20,"Lat":-1.0332,"Lon":37.0693,"Paradox":False,"Beds":350},
-    {"Name":"Meds Chemist Westlands",       "Type":"Pharmacy / Chemist",            "Specialties":"Pharmaceutical dispensing, OTC medications, Lab services",           "Dist_km":5.2,  "Insurance_pct":55,"Wealth":"Fourth", "Access_pct":88,"Retention_pct":72,"Lat":-1.2633,"Lon":36.8036,"Paradox":False,"Beds":0},
-    {"Name":"St Francis Community Clinic",  "Type":"Religious / Mission Clinic",    "Specialties":"General OPD, HIV/ART, Nutrition, TB/DOTS",                           "Dist_km":14.0, "Insurance_pct":22,"Wealth":"Lowest", "Access_pct":58,"Retention_pct":50,"Lat":-1.2800,"Lon":36.8700,"Paradox":False,"Beds":15},
+    {"Name":"Kenyatta National Hospital",   "Type":"National Referral Hospital",    "Sector":"Public",      "Phone":"+254 020 272 6300","Specialties":"Oncology, Cardiology, Neurology, Trauma, Burns, Transplant",         "Dist_km":0,    "Insurance_pct":91,"Wealth":"Highest","Access_pct":94,"Retention_pct":89,"Lat":-1.3006,"Lon":36.8066,"Paradox":False,"Beds":1800},
+    {"Name":"Pumwani Maternity Hospital",   "Type":"County Hospital",               "Sector":"Public",      "Phone":"+254 020 222 3991","Specialties":"Maternity, Neonatal ICU, Gynaecology",                               "Dist_km":4.2,  "Insurance_pct":62,"Wealth":"Middle", "Access_pct":81,"Retention_pct":74,"Lat":-1.2841,"Lon":36.8458,"Paradox":False,"Beds":320},
+    {"Name":"Mathare North HC",             "Type":"Health Centre",                 "Sector":"Public",      "Phone":"+254 020 232 0000","Specialties":"General OPD, Maternal Health, Immunisation",                         "Dist_km":6.8,  "Insurance_pct":31,"Wealth":"Lowest", "Access_pct":48,"Retention_pct":44,"Lat":-1.2611,"Lon":36.8590,"Paradox":True, "Beds":40},
+    {"Name":"Mbagathi District Hospital",   "Type":"County Hospital",               "Sector":"Public",      "Phone":"+254 020 201 9000","Specialties":"General Surgery, Infectious Disease, Psychiatry, Paediatrics",        "Dist_km":8.1,  "Insurance_pct":55,"Wealth":"Middle", "Access_pct":77,"Retention_pct":71,"Lat":-1.3217,"Lon":36.7680,"Paradox":False,"Beds":260},
+    {"Name":"Kayole Sub-County Hospital",   "Type":"Sub-County Hospital",           "Sector":"Public",      "Phone":"+254 020 232 1000","Specialties":"Emergency, Maternity, General OPD, Eye Clinic",                      "Dist_km":12.4, "Insurance_pct":28,"Wealth":"Second", "Access_pct":43,"Retention_pct":38,"Lat":-1.2718,"Lon":36.9001,"Paradox":True, "Beds":120},
+    {"Name":"Ruaraka Health Centre",        "Type":"Clinic",                        "Sector":"Public",      "Phone":"+254 020 856 0000","Specialties":"General OPD, Family Planning, HIV/ART",                              "Dist_km":15.0, "Insurance_pct":44,"Wealth":"Middle", "Access_pct":65,"Retention_pct":59,"Lat":-1.2488,"Lon":36.8756,"Paradox":False,"Beds":20},
+    {"Name":"Dandora Dispensary",           "Type":"Dispensary",                    "Sector":"Public",      "Phone":"+254 020 232 2000","Specialties":"Basic Primary Care, Immunisation, Wound Care",                       "Dist_km":18.3, "Insurance_pct":19,"Wealth":"Lowest", "Access_pct":37,"Retention_pct":30,"Lat":-1.2595,"Lon":36.9087,"Paradox":True, "Beds":10},
+    {"Name":"Kangemi Health Centre",        "Type":"Health Centre",                 "Sector":"Public",      "Phone":"+254 020 442 0000","Specialties":"General OPD, Maternal Health, TB/DOTS, Dental",                      "Dist_km":21.1, "Insurance_pct":33,"Wealth":"Second", "Access_pct":55,"Retention_pct":48,"Lat":-1.2724,"Lon":36.7369,"Paradox":False,"Beds":35},
+    {"Name":"Nairobi West Hospital",        "Type":"Religious / Mission Hospital",  "Sector":"Faith-Based", "Phone":"+254 020 603 0000","Specialties":"Oncology, Orthopaedics, Cardiology, Dialysis, ICU",                  "Dist_km":9.5,  "Insurance_pct":74,"Wealth":"Fourth", "Access_pct":82,"Retention_pct":76,"Lat":-1.3146,"Lon":36.8100,"Paradox":False,"Beds":200},
+    {"Name":"Aga Khan University Hospital", "Type":"Private Hospital",              "Sector":"Private",     "Phone":"+254 020 366 2000","Specialties":"Neurosurgery, Oncology, Cardiology, Transplant, MRI/CT",             "Dist_km":3.1,  "Insurance_pct":96,"Wealth":"Highest","Access_pct":91,"Retention_pct":88,"Lat":-1.2702,"Lon":36.8074,"Paradox":False,"Beds":250},
+    {"Name":"Limuru Sub-County Hospital",   "Type":"Sub-County Hospital",           "Sector":"Public",      "Phone":"+254 066 702 0000","Specialties":"General Surgery, Maternity, Emergency",                              "Dist_km":31.7, "Insurance_pct":47,"Wealth":"Middle", "Access_pct":31,"Retention_pct":26,"Lat":-1.1140,"Lon":36.6480,"Paradox":False,"Beds":80},
+    {"Name":"Thika Level 5 Hospital",       "Type":"County Referral Hospital",      "Sector":"Public",      "Phone":"+254 067 221 000", "Specialties":"Oncology, Dialysis, Orthopaedics, ICU, Cardiology",                  "Dist_km":44.2, "Insurance_pct":52,"Wealth":"Fourth", "Access_pct":24,"Retention_pct":20,"Lat":-1.0332,"Lon":37.0693,"Paradox":False,"Beds":350},
+    {"Name":"Meds Chemist Westlands",       "Type":"Pharmacy / Chemist",            "Sector":"Private",     "Phone":"+254 020 444 0000","Specialties":"Pharmaceutical dispensing, OTC medications, Lab services",           "Dist_km":5.2,  "Insurance_pct":55,"Wealth":"Fourth", "Access_pct":88,"Retention_pct":72,"Lat":-1.2633,"Lon":36.8036,"Paradox":False,"Beds":0},
+    {"Name":"St Francis Community Clinic",  "Type":"Religious / Mission Clinic",    "Sector":"Faith-Based", "Phone":"+254 020 232 3000","Specialties":"General OPD, HIV/ART, Nutrition, TB/DOTS",                           "Dist_km":14.0, "Insurance_pct":22,"Wealth":"Lowest", "Access_pct":58,"Retention_pct":50,"Lat":-1.2800,"Lon":36.8700,"Paradox":False,"Beds":15},
 ])
 
 MODEL_PERF = pd.DataFrame([
-    {"Algorithm":"XGBoost (Optimised)", "F1":0.9034,"AUC":0.6524,"Accuracy":0.8240,"Operational":True },
-    {"Algorithm":"Gradient Boosting",   "F1":0.9034,"AUC":0.6463,"Accuracy":0.8239,"Operational":False},
-    {"Algorithm":"AdaBoost",            "F1":0.9034,"AUC":0.6397,"Accuracy":0.8238,"Operational":False},
-    {"Algorithm":"Ensemble (Top 3)",    "F1":0.9034,"AUC":0.6510,"Accuracy":0.8238,"Operational":False},
-    {"Algorithm":"Decision Tree",       "F1":0.7584,"AUC":0.6445,"Accuracy":0.6496,"Operational":False},
-    {"Algorithm":"Random Forest",       "F1":0.7509,"AUC":0.6528,"Accuracy":0.6422,"Operational":False},
-    {"Algorithm":"Logistic Regression", "F1":0.5152,"AUC":0.5248,"Accuracy":0.4281,"Operational":False},
+    {"Algorithm":"XGBoost (Tuned)",     "F1":0.8091,"AUC":0.8144,"Accuracy":0.7222,"Operational":True },
+    {"Algorithm":"AdaBoost",            "F1":0.9343,"AUC":0.5501,"Accuracy":0.8766,"Operational":False},
+    {"Algorithm":"Gradient Boosting",   "F1":0.9342,"AUC":0.5762,"Accuracy":0.8766,"Operational":False},
+    {"Algorithm":"Ensemble (Top 3)",    "F1":0.9343,"AUC":0.5902,"Accuracy":0.8767,"Operational":False},
+    {"Algorithm":"Random Forest",       "F1":0.6573,"AUC":0.5932,"Accuracy":0.5282,"Operational":False},
+    {"Algorithm":"Logistic Regression", "F1":0.6611,"AUC":0.6143,"Accuracy":0.5342,"Operational":False},
+    {"Algorithm":"Decision Tree",       "F1":0.5010,"AUC":0.5641,"Accuracy":0.3963,"Operational":False},
 ])
 
 SHAP_DATA = pd.DataFrame([
@@ -310,8 +310,8 @@ SHAP_DATA = pd.DataFrame([
     {"Feature":"Provider Type",    "Importance":0.02,"Category":"Need"},
 ])
 
-GAM_DIST = [0,5,10,15,20,25,30,35,40,50,60,80,100]
-GAM_PROB = [0.96,0.94,0.91,0.88,0.84,0.76,0.58,0.40,0.27,0.14,0.08,0.04,0.02]
+GAM_DIST = [0,5,10,15,20,25,30,35,40,50,60]
+GAM_PROB = [0.899,0.905,0.910,0.914,0.916,0.918,0.910,0.895,0.875,0.840,0.800]
 
 FOLIUM_COLORS = {
     "National Referral Hospital":   "darkblue",
@@ -392,7 +392,7 @@ with st.sidebar:
     <div style='text-align:center;padding:20px 0 14px 0;'>
         <div style='font-size:42px;'>⚕️</div>
         <div style='font-size:17px;font-weight:800;color:{acc};margin-top:6px;'>HealthLink Kenya</div>
-        <div style='font-size:11px;color:{muted};margin-top:4px;'>Clinical Decision-Support Platform</div>
+        <div style='font-size:11px;color:{muted};margin-top:4px;'>Predictive Framework · Healthcare Access</div>
     </div>
     <div style='background:{"#21262D" if is_dark else "#F0F4FA"};border-radius:10px;padding:10px 14px;margin-bottom:10px;'>
         <div style='font-size:12px;font-weight:700;color:{acc};'>👤 {user.get("name","User")}</div>
@@ -416,8 +416,10 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"""
     <div style='font-size:10px;color:{muted};line-height:2.0;'>
-        <b>Model:</b> XGBoost · F1 0.9034<br>
-        <b>AUC:</b> 0.6524 · Acc: 0.8240<br>
+        <b>Access model:</b> XGBoost (Tuned)<br>
+        <b>F1:</b> 0.8091 · AUC: 0.8144<br>
+        <b>Retention model:</b> XGBoost Stage 2<br>
+        <b>AUC:</b> 0.8510 · Brier: 0.1760<br>
         <b>Data:</b> KNBS HSB Survey 2022<br>
         <b>n =</b> 99,031 observations<br>
         <b>Threshold:</b> 25km (GAM)<br>
@@ -839,7 +841,7 @@ elif "Retention" in module:
 
     a1,a2,a3,a4 = st.columns(4)
     a1.metric("Access Probability",    f"{pt['access_prob']}%",   "XGBoost model")
-    a2.metric("Retention Probability", f"{pt['retention_prob']}%","Retention model")
+    a2.metric("Retention Probability", f"{pt['retention_prob']}%","Stage 2 XGBoost · AUC 0.851")
     a3.metric("Next Appointment",      pt["next_appointment"])
     a4.metric("Visits YTD / Total",    f"{pt['visits_ytd']} / {pt['total_visits']}")
 
@@ -914,7 +916,7 @@ elif "Decay" in module:
     danger_dist = [d for d in GAM_DIST if d>=25]
     danger_prob = [p for d,p in zip(GAM_DIST,GAM_PROB) if d>=25]
 
-    fig.add_trace(go.Scatter(x=safe_dist+[25],y=safe_prob+[0.76],
+    fig.add_trace(go.Scatter(x=safe_dist+[25],y=safe_prob+[0.918],
         fill="tozeroy",fillcolor="rgba(16,185,129,0.10)",
         line=dict(color="rgba(0,0,0,0)"),showlegend=False))
     fig.add_trace(go.Scatter(x=danger_dist,y=danger_prob,
@@ -925,10 +927,10 @@ elif "Decay" in module:
         marker=dict(size=7,color=acc),
         name="P(Access | Distance)",hovertemplate="Distance: %{x}km<br>Access Prob: %{y:.0%}"))
     fig.add_vline(x=25,line_dash="dash",line_color="#F59E0B",line_width=2,
-        annotation_text="25km Inflection",annotation_font_color="#F59E0B",annotation_position="top right")
-    fig.add_trace(go.Scatter(x=[25],y=[0.76],mode="markers",
+        annotation_text="25km — decay accelerates",annotation_font_color="#F59E0B",annotation_position="top right")
+    fig.add_trace(go.Scatter(x=[25],y=[0.918],mode="markers",
         marker=dict(size=12,color="#F59E0B",symbol="circle"),
-        name="Critical Inflection",hovertemplate="25km → 76% access probability"))
+        name="Critical Inflection",hovertemplate="25km → 91.8% access probability"))
     fig.update_layout(paper_bgcolor=card,plot_bgcolor=card,font_color=text,height=420,
         xaxis=dict(title="Distance to Nearest Facility (km)",color=muted,gridcolor=border,linecolor=border,
                    tickfont=dict(color=TICK_COL)),
@@ -938,9 +940,9 @@ elif "Decay" in module:
     st.plotly_chart(fig, use_container_width=True)
 
     c1,c2,c3 = st.columns(3)
-    with c1: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>0–25km · Safe Zone</b><br><span style='font-size:11px;color:{muted};'>Access probability 76–96%. Effective catchment for standard facility deployment and ambulance dispatch.</span></div>""", unsafe_allow_html=True)
-    with c2: st.markdown(f"""<div class='med-card-amber'><b style='color:#92400E;'>25km · Critical Inflection</b><br><span style='font-size:11px;color:{muted};'>GAM-derived empirical threshold. Evidence base for mobile clinic deployment radius and policy recalibration.</span></div>""", unsafe_allow_html=True)
-    with c3: st.markdown(f"""<div class='med-card-red'><b style='color:#DC2626;'>&gt;25km · Danger Zone</b><br><span style='font-size:11px;color:{muted};'>Access drops precipitously toward zero. Priority zone for mobile health unit deployment and transport subsidies.</span></div>""", unsafe_allow_html=True)
+    with c1: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>0–25km · Stable Zone</b><br><span style='font-size:11px;color:{muted};'>Access probability 89.9–91.8% within the surveyed cohort. Peak at 25km reflects the facility-based survey's positive selection. Effective planning zone for standard catchment deployment.</span></div>""", unsafe_allow_html=True)
+    with c2: st.markdown(f"""<div class='med-card-amber'><b style='color:#92400E;'>25km · Decay Threshold</b><br><span style='font-size:11px;color:{muted};'>GAM-derived empirical threshold. Access probability peaks at 91.8% then declines — 25km marks the point beyond which distance-decay accelerates. Evidence base for mobile clinic radius recalibration.</span></div>""", unsafe_allow_html=True)
+    with c3: st.markdown(f"""<div class='med-card-red'><b style='color:#DC2626;'>&gt;25km · Declining Zone</b><br><span style='font-size:11px;color:{muted};'>Access probability declines to 84.0% at 50km and 80.0% at 60km. Within the surveyed population, beyond-25km patients show measurably lower engagement. Priority zone for transport support and outreach.</span></div>""", unsafe_allow_html=True)
 
     st.markdown(f"""<div class='med-card-blue' style='margin-top:16px;'>
         <b style='color:#1D4ED8;'>📋 Policy Implication (Ministry of Health)</b><br>
@@ -1000,7 +1002,7 @@ elif "Analytics" in module:
 
     with vtab2:
         def style_row(row):
-            if row["Algorithm"]=="XGBoost (Optimised)":
+            if row["Algorithm"]=="XGBoost (Tuned)":
                 return [f"background-color:{card_b};color:{acc};font-weight:600"]*len(row)
             return [f"color:{text}"]*len(row)
         display = MODEL_PERF.drop(columns=["Operational"])
@@ -1017,7 +1019,7 @@ elif "Analytics" in module:
         st.plotly_chart(fig_m, use_container_width=True)
         c1,c2 = st.columns(2)
         with c1: st.markdown(f"""<div class='med-card-red'><b style='color:#DC2626;'>⚖️ Class Imbalance</b><br><span style='font-size:11px;color:{muted};'>scale_pos_weight corrects heavy skew. Result: 3,484 FPs (Urban Proximity Paradox) · 5 FNs.</span></div>""", unsafe_allow_html=True)
-        with c2: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>✅ Why XGBoost</b><br><span style='font-size:11px;color:{muted};'>Highest single-model AUC (0.6524). Ensemble marginally stabilised variance without material gain — XGBoost selected for deployment.</span></div>""", unsafe_allow_html=True)
+        with c2: st.markdown(f"""<div class='med-card-green'><b style='color:#065F46;'>✅ Why XGBoost</b><br><span style='font-size:11px;color:{muted};'>Tuned XGBoost: F1 0.8091 · AUC 0.8144 · Brier 0.1760 · Generalisation gap 0.013. SMOTE comparison confirmed scale_pos_weight as the superior imbalance strategy. Ensemble (Top 3) offered 0.0001 AUC gain at the cost of architectural complexity — XGBoost selected for deployment.</span></div>""", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -1033,7 +1035,7 @@ elif "FAQ" in module:
         ("Who is this tool designed for?",
          "Hospital administrators, referral coordinators, community health workers, health planners at county and national level, and researchers studying healthcare access in Kenya."),
         ("What is the 25km rule?",
-         "Research using a Generalised Additive Model (GAM) found a <b>critical inflection point at 25km</b>. Access probability is 96% at 0km and 76% at 25km — then drops sharply to near zero beyond 60km. This finding challenges the traditional 5km epidemiological buffer and provides an evidence base for mobile clinic deployment radius."),
+         "Research using a Generalised Additive Model (GAM) applied to the KNBS 2022 survey revealed that access probability within the surveyed population peaks at <b>91.8% at 25km</b> — then begins a measurable decline, reaching 84.0% at 50km. The 25km mark represents the empirical threshold beyond which distance-decay accelerates. Because the survey captures individuals who engaged with the health system, the high baseline probability reflects positive selection bias. The finding still provides an evidence base for recalibrating mobile clinic deployment radius and facility placement standards beyond the conventional 5km epidemiological buffer."),
         ("What is the Urban Proximity Paradox?",
          "3,484 patients who lived <b>close to a hospital</b> still failed to access care. This means distance alone doesn't explain non-utilisation — hidden barriers like long wait times, indirect costs, poor perceived service quality, and transport difficulties also play a critical role."),
         ("How does the Access Prediction work?",
@@ -1041,7 +1043,7 @@ elif "FAQ" in module:
         ("What is the Andersen Behavioural Model?",
          "This is the theoretical framework underpinning the research. It categorises factors affecting healthcare access into three groups: <b>Enabling</b> (distance, wealth, insurance — 73% of model weight), <b>Predisposing</b> (age, gender, education, residence — 25%), and <b>Need</b> (provider type — 2%)."),
         ("Why was XGBoost selected as the operational model?",
-         "XGBoost achieved the highest ROC-AUC (0.6524) and matched the best F1-score (0.9034) among all seven algorithms tested. A combined ensemble of the top three models offered no statistically meaningful improvement, so the simpler single XGBoost model was selected for FastAPI deployment."),
+         "XGBoost achieved the highest tuned ROC-AUC (0.8144) and F1-score (0.8091) on the held-out test partition with a generalisation gap of only 0.013 between cross-validated and test AUC, confirming the model generalises well. SMOTE was evaluated as an alternative to scale_pos_weight for class imbalance and rejected — scale_pos_weight produced superior AUC with lower architectural complexity. A combined Ensemble (Top 3) offered a negligible 0.0001 AUC improvement at the cost of significantly higher complexity, so the single XGBoost model was selected for FastAPI deployment."),
         ("What does SHAP mean?",
          "<b>SHAP (SHapley Additive exPlanations)</b> is a technique that explains <i>why</i> the model made a specific prediction by showing how much each feature contributed. In this study, TreeSHAP was applied to the XGBoost model to show that distance contributes 41% of the model's decision-making — more than all socioeconomic variables combined."),
         ("How do I run this locally?",
@@ -1133,7 +1135,9 @@ elif "Settings" in module:
         <b style='color:#1D4ED8;'>ℹ️ About HealthLink Kenya v3.0</b><br>
         <span style='font-size:12px;color:{muted};'>
         MSc Data Science &amp; Analytics · Strathmore University · 2026<br>
-        Model: XGBoost · Data: KNBS Health-Seeking Behaviour Survey 2022 · n = 99,031<br>
+        Access Model: XGBoost (Tuned) F1 0.8091 · AUC 0.8144<br>
+        Retention Model: XGBoost Stage 2 · AUC 0.8510<br>
+        Data: KNBS Health-Seeking Behaviour Survey 2022 · n = 99,031<br>
         Researcher: Rutendo Julia Kandeya (168332) · Supervisor: Dr. Esther Khakata
         </span>
     </div>""", unsafe_allow_html=True)
