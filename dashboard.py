@@ -25,6 +25,11 @@ def load_models():
 
 access_model, retention_model, models_ok = load_models()
 
+# Optimised classification threshold — derived from asymmetric cost minimisation
+# in notebook Cell A. FN cost = 5x FP cost (missing high-risk patient vs
+# unnecessary outreach). Update this to match your notebook's printed value.
+OPTIMAL_THRESHOLD = 0.35  # replace with your notebook's printed value
+
 def predict_access(distance_km, age_group, gender, wealth_index, insurance_status, residential_area_group):
     if access_model is None:
         return 72.0, "fallback"
@@ -297,7 +302,7 @@ with st.sidebar:
     st.markdown(f"""<div style='font-size:10px;color:{muted};line-height:2.0;'>
         <b>Access model:</b> XGBoost (Tuned)<br><b>F1:</b> 0.8091 · AUC: 0.8144<br>
         <b>Retention model:</b> XGBoost Stage 2<br><b>AUC:</b> 0.8510 · Brier: 0.1760<br>
-        <b>Data:</b> KNBS HSB Survey 2022<br><b>n =</b> 99,031 observations<br><b>Threshold:</b> 25km (GAM)
+        <b>Data:</b> KNBS HSB Survey 2022<br><b>n =</b> 99,031 observations<br><b>GAM threshold:</b> 25km<br><b>Decision threshold:</b> {OPTIMAL_THRESHOLD}
     </div>""",unsafe_allow_html=True)
     st.markdown("---")
     if st.button("🚪  Sign Out",use_container_width=True):
@@ -377,9 +382,10 @@ elif "Triage" in module:
         st.markdown(f"""<div class='med-card-amber' style='margin-top:8px;'><span style='font-size:12px;color:#92400E;'>⚡ Approaching critical zone (15–25km). Monitor this catchment.</span></div>""",unsafe_allow_html=True)
     clinical_notes=st.text_area("Clinical Notes (optional — for display only)",value="Patient reports fever and difficulty travelling to facility.",height=70)
     if st.button("🔍  Run Access Prediction"):
-        ins_val=1 if insurance=="Insured" else 0
-        prob,source=predict_access(distance_km,age_group,gender,wealth_index,ins_val,residence)
-        prediction=1 if prob>=50 else 0
+        ins_val = 1 if insurance == "Insured" else 0
+        prob, source = predict_access(distance_km, age_group, gender, wealth_index, ins_val, residence)
+        # Use optimised threshold — not default 0.50
+        prediction = 1 if (prob / 100) >= OPTIMAL_THRESHOLD else 0
         st.markdown("---")
         m1,m2,m3=st.columns(3)
         m1.metric("Access Probability",f"{prob}%",f"XGBoost · {source}")
