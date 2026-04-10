@@ -12,3 +12,12 @@ xgboost
 nltk
 numpy
 pydantic
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+alembic
+bcrypt==4.0.1
+python-multipart
