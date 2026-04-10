@@ -1,4 +1,3 @@
-streamlit
 fastapi
 uvicorn
 requests
@@ -9,15 +8,12 @@ plotly
 joblib
 scikit-learn
 xgboost
-nltk
 numpy
 pydantic
-uvicorn[standard]
 sqlalchemy
-psycopg2
-python-jose[cryptography]
-passlib[bcrypt]
+python-jose
+passlib
 python-dotenv
-alembic
 bcrypt==4.0.1
 python-multipart
+aiosqlite
