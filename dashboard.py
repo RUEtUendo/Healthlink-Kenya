@@ -156,7 +156,7 @@ def predict_retention(dist, age, gender, wealth, insured, residence):
     except: return 65.0
 
 # ── API HELPERS ───────────────────────────────────────────────
-API_BASE = "http://127.0.0.1:8000"
+API_BASE = "https://healthlink-kenya-production.up.railway.app"
 
 def get_patients(page=1, risk=None, sub=None, search=None):
     try:
