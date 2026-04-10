@@ -812,7 +812,7 @@ with tabs[6]:
               </div>
               <div style='font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;'>{alert["sub"]} · {alert["cond"]}</div>
               <div style='font-size:13px;color:rgba(255,255,255,0.75);margin-top:7px;line-height:1.5;'>{alert["msg"]}</div>
-              {f'<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 14px;margin-top:10px;"><span style=\'font-size:20px;'>📞</span><div><div style=\'font-size:11px;color:rgba(255,255,255,0.35);\'>Emergency Contact</div><div style=\'font-size:13px;font-weight:600;color:white;\'>{alert['ec']} · {alert[\'rel\']}</div></div><div style=\'margin-left:auto;font-size:14px;font-weight:700;color:#F87171;\'>{alert[\'phone\']}</div></div>' if alert["phone"] else ""}
+              {f"<div style='display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 14px;margin-top:10px;'><span style='font-size:20px;'>📞</span><div><div style='font-size:11px;color:rgba(255,255,255,0.35);'>Emergency Contact</div><div style='font-size:13px;font-weight:600;color:white;'>{alert['ec']} · {alert['rel']}</div></div><div style='margin-left:auto;font-size:14px;font-weight:700;color:#F87171;'>{alert['phone']}</div></div>" if alert["phone"] else ""}
               <div style='font-size:11px;color:rgba(255,255,255,0.25);margin-top:8px;'>{alert["time"]}</div>
             </div>
           </div>
