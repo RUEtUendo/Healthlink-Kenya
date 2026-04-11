@@ -1,12 +1,18 @@
-import streamlit as st
-import streamlit.components.v1 as components
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-# Make the page wide to fit your new dashboard
-st.set_page_config(page_title="HealthLink Kenya", layout="wide", initial_sidebar_state="collapsed")
+load_dotenv()
 
-# Read the HTML file you uploaded
-with open("index.html", "r", encoding="utf-8") as f:
-    html_code = f.read()
+# --- THE FIX: Force Python to use the exact folder this file lives in ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "healthlink.db")
 
-# Embed the HTML directly into the Streamlit app
-components.html(html_code, height=900, scrolling=True)
+# Use Railway's Postgres if it exists, otherwise use the absolute path to the SQLite file
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
