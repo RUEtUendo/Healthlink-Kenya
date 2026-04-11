@@ -788,9 +788,8 @@ with tabs[6]:
       <div>
         <div style='font-family:Sora,sans-serif;font-size:22px;font-weight:700;color:white;'>Alerts</div>
         <div style='font-size:13px;color:rgba(255,255,255,0.45);'>Emergency contacts, high-risk flags and urgent outreach actions</div>
-      </div>
-      <span style='background:rgba(226,75,74,0.2);color:#F87171;font-size:12px;font-weight:700;padding:7px 14px;border-radius:6px;'>
-        {sum(1 for a in ALERTS_DATA if a["sev"]=="critical")} Critical
+        </div><span style='background:rgba(226,75,74,0.2);color:#F87171;font-size:12px;font-weight:700;padding:7px 14px;border-radius:6px;'>
+          {sum(1 for a in ALERTS_DATA if a["sev"]=="critical")} Critical
       </span>
     </div>""".format(sum=sum, ALERTS_DATA=ALERTS_DATA), unsafe_allow_html=True)
 
