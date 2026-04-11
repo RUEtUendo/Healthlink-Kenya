@@ -876,3 +876,4 @@ with tabs[7]:
         st.session_state.auth = False
         st.session_state.user = {}
         st.rerun()
+      
