@@ -9,6 +9,7 @@ joblib
 scikit-learn
 xgboost
 numpy
+nltk
 pydantic
 sqlalchemy
 python-jose
