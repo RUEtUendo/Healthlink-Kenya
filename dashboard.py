@@ -1,3 +1,11 @@
+import streamlit as st
+import streamlit.components.v1 as components
+
+# 1. Set up the Streamlit page
+st.set_page_config(page_title="HealthLink Kenya", layout="wide")
+
+# 2. Start the triple quotes
+html_source_code = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1703,3 +1711,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+""" 
+# ^^^ End the triple quotes here!
+
+# 3. Tell Streamlit to render the HTML string
+components.html(html_source_code, height=900, scrolling=True)
