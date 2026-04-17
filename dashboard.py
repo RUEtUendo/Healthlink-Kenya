@@ -1,10 +1,8 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. Set up the Streamlit page
 st.set_page_config(page_title="HealthLink Kenya", layout="wide")
 
-# 2. Start the triple quotes
 html_source_code = """
 <!DOCTYPE html>
 <html lang="en">
@@ -16,557 +14,525 @@ html_source_code = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  :root {
-    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-mid: #5DCAA5; --teal-dark: #0F6E56;
-    --navy: #0C2D5E; --navy-mid: #185FA5; --navy-light: #E6F1FB; --navy-pale: #F0F6FF;
-    --white: #FFFFFF; --bg: #F7F9FC; --card: #FFFFFF;
-    --text: #1a2332; --text-muted: #6b7a8d; --text-light: #9aa3ae;
-    --border: #E8EDF3; --border-strong: #CBD5E1;
-    --danger: #E24B4A; --amber: #F59E0B; --success: #10B981;
-    --font-main: 'DM Sans', sans-serif; --font-display: 'Sora', sans-serif;
-    --radius: 12px; --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+ :root {
+   --teal: #1D9E75; --teal-light: #E1F5EE; --teal-mid: #5DCAA5; --teal-dark: #0F6E56;
+   --navy: #0C2D5E; --navy-mid: #185FA5; --navy-light: #E6F1FB; --navy-pale: #F0F6FF;
+   --white: #FFFFFF; --bg: #F7F9FC; --card: #FFFFFF;
+   --text: #1a2332; --text-muted: #6b7a8d; --text-light: #9aa3ae;
+   --border: #E8EDF3; --border-strong: #CBD5E1;
+   --danger: #E24B4A; --amber: #F59E0B; --success: #10B981;
+   --font-main: 'DM Sans', sans-serif; --font-display: 'Sora', sans-serif;
+   --radius: 12px; --radius-sm: 8px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: var(--font-main); background: var(--bg); color: var(--text); font-size:14px; line-height:1.6; }
-
-  /* ── SCREENS ── */
-  .screen { display:none; min-height:100vh; }
-  .screen.active { display:flex; }
-
-  /* ── LOGIN ── */
-  #login { background: linear-gradient(135deg, #0C2D5E 0%, #185FA5 50%, #1D9E75 100%); align-items:center; justify-content:center; flex-direction:column; }
-  .login-card { background: white; border-radius: 20px; padding: 48px; width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
-  .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:32px; }
-  .login-logo-icon { width:48px; height:48px; background: linear-gradient(135deg, var(--teal), var(--navy-mid)); border-radius:12px; display:flex; align-items:center; justify-content:center; }
-  .login-logo-icon svg { width:26px; height:26px; fill:white; }
-  .login-logo-text { font-family: var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
-  .login-logo-text span { color:var(--teal); }
-  .login-title { font-size:26px; font-weight:700; font-family:var(--font-display); color:var(--navy); margin-bottom:6px; }
-  .login-sub { color:var(--text-muted); font-size:14px; margin-bottom:32px; }
-  .sw-login-profile { border:2px solid var(--teal); border-radius:var(--radius); padding:24px 20px; text-align:center; background:var(--teal-light); margin-bottom:28px; }
-  .sw-login-profile .role-icon { font-size:36px; margin-bottom:10px; }
-  .sw-login-profile .role-label { font-size:16px; font-weight:700; color:var(--navy); }
-  .sw-login-profile .role-name { font-size:13px; font-weight:600; color:var(--teal-dark); margin-top:4px; }
-  .sw-login-profile .role-desc { font-size:12px; color:var(--text-muted); margin-top:4px; }
-  .login-btn { width:100%; padding:14px; background:linear-gradient(135deg, var(--teal), var(--teal-dark)); color:white; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:opacity 0.2s; }
-  .login-btn:hover { opacity:0.9; }
-
-  /* ── SOCIAL WORKER LAYOUT ── */
-  #social { background:#0A1929; flex-direction:row; }
-  .sw-sidebar { width:230px; min-height:100vh; background:#0C2340; display:flex; flex-direction:column; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.06); }
-  .sw-sidebar-logo { padding:22px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px; }
-  .sw-sidebar-logo-icon { width:36px; height:36px; background:linear-gradient(135deg, var(--teal), var(--navy-mid)); border-radius:9px; display:flex; align-items:center; justify-content:center; }
-  .sw-sidebar-logo-icon svg { width:20px; height:20px; fill:white; }
-  .sw-sidebar-logo-text { font-family:var(--font-display); font-size:15px; font-weight:700; color:white; }
-  .sw-sidebar-logo-text span { color:var(--teal-mid); }
-  .sw-sidebar-user { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px; }
-  .sw-avatar { width:36px; height:36px; border-radius:50%; background:var(--teal-dark); display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:13px; flex-shrink:0; }
-  .sw-user-name { font-size:13px; font-weight:600; color:white; }
-  .sw-user-role { font-size:11px; color:var(--teal-mid); font-weight:500; }
-  .sw-nav { flex:1; padding:12px 0; }
-  .sw-nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:rgba(255,255,255,0.5); font-size:13px; font-weight:500; transition:all 0.15s; border-left:3px solid transparent; }
-  .sw-nav-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); }
-  .sw-nav-item.active { background:rgba(29,158,117,0.15); color:var(--teal-mid); border-left-color:var(--teal-mid); font-weight:600; }
-  .sw-nav-item .nav-icon { font-size:16px; width:20px; text-align:center; }
-  .sw-sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.06); }
-  .logout-btn { display:flex; align-items:center; gap:8px; color:rgba(255,255,255,0.35); font-size:13px; cursor:pointer; padding:8px 0; }
-  .logout-btn:hover { color:var(--danger); }
-  .sw-main { flex:1; overflow-y:auto; }
-  .sw-page { display:none; padding:28px 32px; }
-  .sw-page.active { display:block; }
-  .sw-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-  .sw-page-title { font-family:var(--font-display); font-size:22px; font-weight:700; color:white; }
-  .sw-page-sub { font-size:13px; color:rgba(255,255,255,0.45); margin-top:2px; }
-  .sw-card { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:20px; }
-  .sw-card-title { font-size:12px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px; }
-
-  /* Hub grid */
-  .hub-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:28px; }
-  .hub-btn { background:#0F2847; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:28px 16px 22px; text-align:center; cursor:pointer; transition:all 0.2s; }
-  .hub-btn:hover { background:rgba(29,158,117,0.12); border-color:var(--teal-mid); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-  .hub-btn .hub-icon { font-size:32px; margin-bottom:12px; display:block; }
-  .hub-btn .hub-label { font-size:13px; font-weight:600; color:white; }
-  .hub-btn .hub-desc { font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px; }
-  .sw-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
-  .sw-stat { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:16px; }
-  .sw-stat-val { font-family:var(--font-display); font-size:26px; font-weight:700; color:white; }
-  .sw-stat-label { font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px; }
-  .sw-stat-change { font-size:11px; margin-top:6px; font-weight:600; }
-  .sw-stat-change.up { color:var(--teal-mid); }
-  .sw-stat-change.down { color:#F87171; }
-
-  /* Geospatial */
-  .sw-map-container { background:#0F2847; border-radius:var(--radius); overflow:hidden; height:420px; border:1px solid rgba(255,255,255,0.08); position:relative; }
-  .sw-map-inner { width:100%; height:100%; background:linear-gradient(160deg, #1a3a1a 0%, #0d2a0d 40%, #0a1e1a 100%); position:relative; }
-  .sw-map-label { font-family:var(--font-display); font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:20px; }
-  .risk-zone { position:absolute; border-radius:50%; opacity:0.35; }
-  .risk-high { background:radial-gradient(circle, #E24B4A, transparent); }
-  .risk-med { background:radial-gradient(circle, #F59E0B, transparent); }
-  .risk-low { background:radial-gradient(circle, #10B981, transparent); }
-  .sw-map-controls { display:flex; gap:8px; }
-  .map-ctrl-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:white; padding:7px 14px; border-radius:6px; font-size:12px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
-  .map-ctrl-btn:hover { background:rgba(29,158,117,0.2); border-color:var(--teal-mid); }
-  .map-ctrl-btn.active-ctrl { background:rgba(29,158,117,0.25); border-color:var(--teal-mid); color:var(--teal-mid); }
-  .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,0.6); }
-  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .map-pin { position:absolute; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.3); z-index:5; }
-  .map-pin:hover { transform:rotate(-45deg) scale(1.2); }
-  .map-pin span { transform:rotate(45deg); font-size:12px; }
-  .pin-hospital { background:var(--teal); }
-  .pin-clinic { background:var(--navy-mid); }
-  .pin-household { background:var(--amber); }
-  .pin-household.active-hh { background:#F87171; border:2px solid white; }
-  .hh-label { position:absolute; font-size:9px; color:white; font-weight:700; background:rgba(0,0,0,0.6); padding:1px 4px; border-radius:3px; white-space:nowrap; transform:translateX(-50%); pointer-events:none; }
-  .decay-ring { position:absolute; border-radius:50%; border:2px dashed rgba(245,158,11,0.5); pointer-events:none; }
-
-  /* Triage table */
-  .triage-table { width:100%; border-collapse:collapse; }
-  .triage-table th { font-size:11px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.05em; padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); }
-  .triage-table td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; color:rgba(255,255,255,0.8); }
-  .triage-table tr:hover td { background:rgba(255,255,255,0.03); }
-  .risk-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; display:inline-block; }
-  .risk-h { background:rgba(226,75,74,0.2); color:#F87171; }
-  .risk-m { background:rgba(245,158,11,0.2); color:#FCD34D; }
-  .risk-l { background:rgba(16,185,129,0.2); color:#6EE7B7; }
-  .barrier-tag { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6); padding:2px 8px; border-radius:4px; font-size:11px; }
-  .triage-action-btn { background:rgba(29,158,117,0.15); border:1px solid rgba(29,158,117,0.3); color:var(--teal-mid); padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; white-space:nowrap; }
-  .triage-action-btn:hover { background:rgba(29,158,117,0.3); }
-
-  /* Reports */
-  .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .chart-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .chart-bar-label { font-size:12px; color:rgba(255,255,255,0.6); width:80px; flex-shrink:0; text-align:right; }
-  .chart-bar-track { flex:1; height:10px; background:rgba(255,255,255,0.08); border-radius:5px; overflow:hidden; }
-  .chart-bar-fill { height:100%; border-radius:5px; background:linear-gradient(90deg, var(--teal), var(--teal-mid)); }
-  .chart-bar-val { font-size:12px; color:rgba(255,255,255,0.5); width:36px; }
-
-  /* Settings */
-  .settings-label { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.08); }
-  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
-  .settings-row:last-child { border-bottom:none; }
-  .settings-key { font-size:13px; color:rgba(255,255,255,0.7); font-weight:500; }
-  .settings-input { padding:7px 12px; border:1px solid rgba(255,255,255,0.12); border-radius:6px; font-size:13px; font-family:var(--font-main); color:white; background:rgba(255,255,255,0.06); width:200px; }
-  .toggle { width:40px; height:22px; background:var(--teal); border-radius:11px; position:relative; cursor:pointer; }
-  .toggle::after { content:''; position:absolute; width:16px; height:16px; background:white; border-radius:50%; top:3px; right:3px; transition:right 0.2s; }
-
-  /* Buttons */
-  .btn-teal { background:var(--teal); color:white; border:none; padding:9px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:opacity 0.2s; }
-  .btn-teal:hover { opacity:0.88; }
-  .btn-outline { background:transparent; color:white; border:1px solid rgba(255,255,255,0.2); padding:9px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
-  .btn-outline:hover { background:rgba(255,255,255,0.06); }
-  .btn-danger { background:rgba(226,75,74,0.15); color:#F87171; border:1px solid rgba(226,75,74,0.3); padding:7px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-main); }
-  .county-badge { background:rgba(29,158,117,0.15); border:1px solid rgba(29,158,117,0.3); color:var(--teal-mid); font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
-
-  /* Mobile clinic filter pills */
-  .mc-filter-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.5); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
-  .mc-filter-btn:hover { background:rgba(255,255,255,0.1); }
-  .mc-filter-btn.active-filter { background:rgba(29,158,117,0.2); border-color:var(--teal-mid); color:var(--teal-mid); }
-
-  /* Shared utils */
-  .flex-row { display:flex; align-items:center; gap:10px; }
-  .flex-between { display:flex; align-items:center; justify-content:space-between; }
-  .mt-16 { margin-top:16px; }
-  .mt-8 { margin-top:8px; }
-
-  /* ── MODAL ── */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-  .modal-overlay.open { display:flex; }
-  .modal-box { background:#0C2340; border:1px solid rgba(255,255,255,0.12); border-radius:16px; width:780px; max-width:95vw; max-height:88vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,0.6); }
-  .modal-header { padding:22px 28px 16px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#0C2340; z-index:1; }
-  .modal-title { font-family:var(--font-display); font-size:18px; font-weight:700; color:white; }
-  .modal-close { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:background 0.15s; }
-  .modal-close:hover { background:rgba(226,75,74,0.3); }
-  .modal-body { padding:24px 28px 28px; }
-
-  /* Patient profile card in modal */
-  .pt-profile-header { display:flex; gap:20px; align-items:flex-start; padding:20px; background:rgba(29,158,117,0.08); border:1px solid rgba(29,158,117,0.2); border-radius:var(--radius); margin-bottom:20px; }
-  .pt-big-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, var(--teal-dark), var(--navy-mid)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:24px; font-weight:700; color:white; flex-shrink:0; }
-  .pt-name { font-family:var(--font-display); font-size:20px; font-weight:700; color:white; }
-  .pt-condition { color:var(--teal-mid); font-size:13px; font-weight:500; margin:4px 0 10px; }
-  .pt-meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px 16px; }
-  .pt-meta label { font-size:10px; color:rgba(255,255,255,0.35); display:block; text-transform:uppercase; letter-spacing:0.05em; }
-  .pt-meta span { font-size:13px; font-weight:500; color:rgba(255,255,255,0.85); }
-  .pt-vitals { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
-  .pt-vital { text-align:center; padding:14px 8px; background:#0F2847; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.06); }
-  .pt-vital-icon { font-size:20px; margin-bottom:4px; }
-  .pt-vital-val { font-family:var(--font-display); font-size:18px; font-weight:700; color:white; }
-  .pt-vital-label { font-size:10px; color:rgba(255,255,255,0.4); margin-top:2px; }
-  .pt-notes { margin-bottom:20px; }
-  .pt-note-item { padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
-  .pt-note-item:last-child { border-bottom:none; }
-  .pt-note-date { font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:3px; }
-  .pt-note-text { font-size:13px; color:rgba(255,255,255,0.75); line-height:1.5; }
-  .ec-card { background:rgba(226,75,74,0.08); border:1px solid rgba(226,75,74,0.25); border-radius:var(--radius-sm); padding:14px 16px; display:flex; align-items:center; gap:12px; }
-  .ec-icon { font-size:24px; flex-shrink:0; }
-  .ec-name { font-size:13px; font-weight:600; color:white; }
-  .ec-rel { font-size:11px; color:rgba(255,255,255,0.4); }
-  .ec-phone { font-size:14px; font-weight:700; color:#F87171; }
-
-  /* Patient list in triage modal */
-  .pt-list { display:grid; gap:8px; }
-  .pt-list-row { background:#0F2847; border:1px solid rgba(255,255,255,0.07); border-radius:var(--radius-sm); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all 0.15s; }
-  .pt-list-row:hover { border-color:var(--teal-mid); background:rgba(29,158,117,0.08); }
-  .pt-list-row.selected-pt { border-color:var(--teal-mid); background:rgba(29,158,117,0.12); }
-  .pt-list-id { font-size:11px; color:rgba(255,255,255,0.4); font-family:monospace; }
-  .pt-list-name { font-size:13px; font-weight:600; color:white; margin-top:1px; }
-  .pt-list-meta { font-size:11px; color:rgba(255,255,255,0.4); }
-  .pt-detail-pane { background:#091a2e; border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius); padding:20px; margin-top:16px; display:none; }
-  .pt-detail-pane.open { display:block; }
-
-  /* Mobile Clinic Routing */
-  .clinic-layout { display:grid; grid-template-columns:300px 1fr; gap:16px; height:500px; }
-  .hh-list-panel { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); overflow-y:auto; }
-  .hh-list-header { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08); font-size:12px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.06em; position:sticky; top:0; background:#0C2340; z-index:1; }
-  .hh-item { padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:all 0.15s; }
-  .hh-item:hover { background:rgba(255,255,255,0.04); }
-  .hh-item.active-hh-item { background:rgba(245,158,11,0.1); border-left:3px solid var(--amber); }
-  .hh-id { font-size:12px; font-weight:600; color:var(--amber); font-family:monospace; }
-  .hh-sub { font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px; }
-  .hh-risk-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .route-map { background:#0F2847; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); position:relative; overflow:hidden; }
-  .route-map-inner { width:100%; height:100%; background:linear-gradient(160deg, #1a3a1a 0%, #0d2a0d 40%, #0a1e1a 100%); position:relative; }
-  .route-line { position:absolute; pointer-events:none; top:0; left:0; width:100%; height:100%; }
-  .hh-tooltip { position:absolute; background:rgba(10,25,41,0.95); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:10px 14px; font-size:12px; color:white; pointer-events:none; z-index:20; min-width:160px; display:none; }
-  .hh-tooltip.show { display:block; }
-  .hh-tooltip .tt-id { color:var(--amber); font-weight:700; font-family:monospace; font-size:13px; }
-  .hh-tooltip .tt-row { margin-top:4px; color:rgba(255,255,255,0.6); font-size:11px; }
-
-  /* Alerts */
-  .alert-card { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; display:flex; align-items:flex-start; gap:16px; position:relative; transition:all 0.2s; }
-  .alert-card.critical { border-left:4px solid #F87171; }
-  .alert-card.warning { border-left:4px solid var(--amber); }
-  .alert-card.info { border-left:4px solid var(--teal-mid); }
-  .alert-icon { font-size:26px; flex-shrink:0; margin-top:2px; }
-  .alert-title { font-size:14px; font-weight:700; color:white; margin-bottom:3px; }
-  .alert-sub { font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; }
-  .alert-time { font-size:11px; color:rgba(255,255,255,0.25); margin-top:6px; }
-  .alert-actions { display:flex; gap:8px; margin-top:12px; }
-  .alert-btn-call { background:rgba(226,75,74,0.15); border:1px solid rgba(226,75,74,0.35); color:#F87171; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
-  .alert-btn-call:hover { background:rgba(226,75,74,0.28); }
-  .alert-btn-ack { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
-  .alert-btn-ack:hover { background:rgba(255,255,255,0.1); }
-  .alert-badge { position:absolute; top:18px; right:18px; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; }
-  .badge-critical { background:rgba(226,75,74,0.2); color:#F87171; }
-  .badge-warning { background:rgba(245,158,11,0.2); color:#FCD34D; }
-  .badge-resolved { background:rgba(16,185,129,0.15); color:#6EE7B7; }
-  .ec-info-box { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 14px; margin-top:10px; }
-  .ec-info-box .ec-label { font-size:11px; color:rgba(255,255,255,0.35); }
-  .ec-info-box .ec-val { font-size:13px; font-weight:600; color:white; }
-  .ec-info-box .ec-phone-link { font-size:13px; font-weight:700; color:#F87171; }
-
-  /* Distance decay in geospatial */
-  .decay-info-panel { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm); padding:14px; margin-top:12px; }
-  .decay-result-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
-  .decay-result-row:last-child { border-bottom:none; }
-  .decay-hh-id { font-family:monospace; color:var(--amber); font-weight:600; }
-  .decay-dist { color:rgba(255,255,255,0.6); }
-  .decay-score { font-weight:700; }
-  .score-high { color:#F87171; }
-  .score-med { color:#FCD34D; }
-  .score-low { color:#6EE7B7; }
+ body { font-family: var(--font-main); background: var(--bg); color: var(--text); font-size:14px; line-height:1.6; }
+ .screen { display:none; min-height:100vh; }
+ .screen.active { display:flex; }
+ 
+ /* LOGIN */
+ #login { background: linear-gradient(135deg, #0C2D5E 0%, #185FA5 50%, #1D9E75 100%); align-items:center; justify-content:center; flex-direction:column; }
+ .login-card { background: white; border-radius: 20px; padding: 48px; width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+ .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:32px; }
+ .login-logo-icon { width:48px; height:48px; background: linear-gradient(135deg, var(--teal), var(--navy-mid)); border-radius:12px; display:flex; align-items:center; justify-content:center; }
+ .login-logo-icon svg { width:26px; height:26px; fill:white; }
+ .login-logo-text { font-family: var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
+ .login-logo-text span { color:var(--teal); }
+ .login-title { font-size:26px; font-weight:700; font-family:var(--font-display); color:var(--navy); margin-bottom:6px; }
+ .login-sub { color:var(--text-muted); font-size:14px; margin-bottom:32px; }
+ .sw-login-profile { border:2px solid var(--teal); border-radius:var(--radius); padding:24px 20px; text-align:center; background:var(--teal-light); margin-bottom:28px; }
+ .sw-login-profile .role-icon { font-size:36px; margin-bottom:10px; }
+ .sw-login-profile .role-label { font-size:16px; font-weight:700; color:var(--navy); }
+ .sw-login-profile .role-name { font-size:13px; font-weight:600; color:var(--teal-dark); margin-top:4px; }
+ .sw-login-profile .role-desc { font-size:12px; color:var(--text-muted); margin-top:4px; }
+ .login-btn { width:100%; padding:14px; background:linear-gradient(135deg, var(--teal), var(--teal-dark)); color:white; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:opacity 0.2s; }
+ .login-btn:hover { opacity:0.9; }
+ 
+ /* SOCIAL WORKER LAYOUT */
+ #social { background:#0A1929; flex-direction:row; }
+ .sw-sidebar { width:230px; min-height:100vh; background:#0C2340; display:flex; flex-direction:column; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.06); }
+ .sw-sidebar-logo { padding:22px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px; }
+ .sw-sidebar-logo-icon { width:36px; height:36px; background:linear-gradient(135deg, var(--teal), var(--navy-mid)); border-radius:9px; display:flex; align-items:center; justify-content:center; }
+ .sw-sidebar-logo-icon svg { width:20px; height:20px; fill:white; }
+ .sw-sidebar-logo-text { font-family:var(--font-display); font-size:15px; font-weight:700; color:white; }
+ .sw-sidebar-logo-text span { color:var(--teal-mid); }
+ .sw-sidebar-user { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px; }
+ .sw-avatar { width:36px; height:36px; border-radius:50%; background:var(--teal-dark); display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:13px; flex-shrink:0; }
+ .sw-user-name { font-size:13px; font-weight:600; color:white; }
+ .sw-user-role { font-size:11px; color:var(--teal-mid); font-weight:500; }
+ .sw-nav { flex:1; padding:12px 0; }
+ .sw-nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:rgba(255,255,255,0.5); font-size:13px; font-weight:500; transition:all 0.15s; border-left:3px solid transparent; }
+ .sw-nav-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); }
+ .sw-nav-item.active { background:rgba(29,158,117,0.15); color:var(--teal-mid); border-left-color:var(--teal-mid); font-weight:600; }
+ .sw-nav-item .nav-icon { font-size:16px; width:20px; text-align:center; }
+ .sw-sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.06); }
+ .logout-btn { display:flex; align-items:center; gap:8px; color:rgba(255,255,255,0.35); font-size:13px; cursor:pointer; padding:8px 0; }
+ .logout-btn:hover { color:var(--danger); }
+ .sw-main { flex:1; overflow-y:auto; }
+ .sw-page { display:none; padding:28px 32px; }
+ .sw-page.active { display:block; }
+ .sw-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+ .sw-page-title { font-family:var(--font-display); font-size:22px; font-weight:700; color:white; }
+ .sw-page-sub { font-size:13px; color:rgba(255,255,255,0.45); margin-top:2px; }
+ .sw-card { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:20px; }
+ .sw-card-title { font-size:12px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px; }
+ 
+ /* Hub grid */
+ .hub-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:28px; }
+ .hub-btn { background:#0F2847; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:28px 16px 22px; text-align:center; cursor:pointer; transition:all 0.2s; }
+ .hub-btn:hover { background:rgba(29,158,117,0.12); border-color:var(--teal-mid); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+ .hub-btn .hub-icon { font-size:32px; margin-bottom:12px; display:block; }
+ .hub-btn .hub-label { font-size:13px; font-weight:600; color:white; }
+ .hub-btn .hub-desc { font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px; }
+ .sw-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+ .sw-stat { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:16px; }
+ .sw-stat-val { font-family:var(--font-display); font-size:26px; font-weight:700; color:white; }
+ .sw-stat-label { font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px; }
+ .sw-stat-change { font-size:11px; margin-top:6px; font-weight:600; }
+ .sw-stat-change.up { color:var(--teal-mid); }
+ .sw-stat-change.down { color:#F87171; }
+ 
+ /* Geospatial */
+ .sw-map-container { background:#0F2847; border-radius:var(--radius); overflow:hidden; height:420px; border:1px solid rgba(255,255,255,0.08); position:relative; }
+ .sw-map-inner { width:100%; height:100%; background:linear-gradient(160deg, #1a3a1a 0%, #0d2a0d 40%, #0a1e1a 100%); position:relative; }
+ .sw-map-label { font-family:var(--font-display); font-size:13px; font-weight:600; color:rgba(255,255,255,0.6); background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:20px; }
+ .risk-zone { position:absolute; border-radius:50%; opacity:0.35; }
+ .risk-high { background:radial-gradient(circle, #E24B4A, transparent); }
+ .risk-med { background:radial-gradient(circle, #F59E0B, transparent); }
+ .risk-low { background:radial-gradient(circle, #10B981, transparent); }
+ .sw-map-controls { display:flex; gap:8px; }
+ .map-ctrl-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:white; padding:7px 14px; border-radius:6px; font-size:12px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
+ .map-ctrl-btn:hover { background:rgba(29,158,117,0.2); border-color:var(--teal-mid); }
+ .map-ctrl-btn.active-ctrl { background:rgba(29,158,117,0.25); border-color:var(--teal-mid); color:var(--teal-mid); }
+ .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,0.6); }
+ .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+ .map-pin { position:absolute; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.3); z-index:5; }
+ .map-pin:hover { transform:rotate(-45deg) scale(1.2); }
+ .map-pin span { transform:rotate(45deg); font-size:12px; }
+ .pin-hospital { background:var(--teal); }
+ .pin-clinic { background:var(--navy-mid); }
+ .pin-household { background:var(--amber); }
+ .pin-household.active-hh { background:#F87171; border:2px solid white; }
+ .hh-label { position:absolute; font-size:9px; color:white; font-weight:700; background:rgba(0,0,0,0.6); padding:1px 4px; border-radius:3px; white-space:nowrap; transform:translateX(-50%); pointer-events:none; }
+ .decay-ring { position:absolute; border-radius:50%; border:2px dashed rgba(245,158,11,0.5); pointer-events:none; }
+ 
+ /* Triage table */
+ .triage-table { width:100%; border-collapse:collapse; }
+ .triage-table th { font-size:11px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.05em; padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); }
+ .triage-table td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; color:rgba(255,255,255,0.8); }
+ .triage-table tr:hover td { background:rgba(255,255,255,0.03); }
+ .risk-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; display:inline-block; }
+ .risk-h { background:rgba(226,75,74,0.2); color:#F87171; }
+ .risk-m { background:rgba(245,158,11,0.2); color:#FCD34D; }
+ .risk-l { background:rgba(16,185,129,0.2); color:#6EE7B7; }
+ .barrier-tag { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6); padding:2px 8px; border-radius:4px; font-size:11px; }
+ .triage-action-btn { background:rgba(29,158,117,0.15); border:1px solid rgba(29,158,117,0.3); color:var(--teal-mid); padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; white-space:nowrap; }
+ .triage-action-btn:hover { background:rgba(29,158,117,0.3); }
+ 
+ /* Reports */
+ .report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+ .chart-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+ .chart-bar-label { font-size:12px; color:rgba(255,255,255,0.6); width:80px; flex-shrink:0; text-align:right; }
+ .chart-bar-track { flex:1; height:10px; background:rgba(255,255,255,0.08); border-radius:5px; overflow:hidden; }
+ .chart-bar-fill { height:100%; border-radius:5px; background:linear-gradient(90deg, var(--teal), var(--teal-mid)); }
+ .chart-bar-val { font-size:12px; color:rgba(255,255,255,0.5); width:36px; }
+ 
+ /* Settings */
+ .settings-label { font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.08); }
+ .settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+ .settings-row:last-child { border-bottom:none; }
+ .settings-key { font-size:13px; color:rgba(255,255,255,0.7); font-weight:500; }
+ .settings-input { padding:7px 12px; border:1px solid rgba(255,255,255,0.12); border-radius:6px; font-size:13px; font-family:var(--font-main); color:white; background:rgba(255,255,255,0.06); width:200px; }
+ .toggle { width:40px; height:22px; background:var(--teal); border-radius:11px; position:relative; cursor:pointer; }
+ .toggle::after { content:''; position:absolute; width:16px; height:16px; background:white; border-radius:50%; top:3px; right:3px; transition:right 0.2s; }
+ 
+ /* Buttons */
+ .btn-teal { background:var(--teal); color:white; border:none; padding:9px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:opacity 0.2s; }
+ .btn-teal:hover { opacity:0.88; }
+ .btn-outline { background:transparent; color:white; border:1px solid rgba(255,255,255,0.2); padding:9px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
+ .btn-outline:hover { background:rgba(255,255,255,0.06); }
+ .btn-danger { background:rgba(226,75,74,0.15); color:#F87171; border:1px solid rgba(226,75,74,0.3); padding:7px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-main); }
+ .county-badge { background:rgba(29,158,117,0.15); border:1px solid rgba(29,158,117,0.3); color:var(--teal-mid); font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+ 
+ /* Mobile clinic filter pills */
+ .mc-filter-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.5); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
+ .mc-filter-btn:hover { background:rgba(255,255,255,0.1); }
+ .mc-filter-btn.active-filter { background:rgba(29,158,117,0.2); border-color:var(--teal-mid); color:var(--teal-mid); }
+ 
+ /* Shared utils */
+ .flex-row { display:flex; align-items:center; gap:10px; }
+ .flex-between { display:flex; align-items:center; justify-content:space-between; }
+ .mt-16 { margin-top:16px; }
+ .mt-8 { margin-top:8px; }
+ 
+ /* MODAL */
+ .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+ .modal-overlay.open { display:flex; }
+ .modal-box { background:#0C2340; border:1px solid rgba(255,255,255,0.12); border-radius:16px; width:780px; max-width:95vw; max-height:88vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,0.6); }
+ .modal-header { padding:22px 28px 16px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#0C2340; z-index:1; }
+ .modal-title { font-family:var(--font-display); font-size:18px; font-weight:700; color:white; }
+ .modal-close { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:background 0.15s; }
+ .modal-close:hover { background:rgba(226,75,74,0.3); }
+ .modal-body { padding:24px 28px 28px; }
+ 
+ /* Patient profile card in modal */
+ .pt-profile-header { display:flex; gap:20px; align-items:flex-start; padding:20px; background:rgba(29,158,117,0.08); border:1px solid rgba(29,158,117,0.2); border-radius:var(--radius); margin-bottom:20px; }
+ .pt-big-avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, var(--teal-dark), var(--navy-mid)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:24px; font-weight:700; color:white; flex-shrink:0; }
+ .pt-name { font-family:var(--font-display); font-size:20px; font-weight:700; color:white; }
+ .pt-condition { color:var(--teal-mid); font-size:13px; font-weight:500; margin:4px 0 10px; }
+ .pt-meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px 16px; }
+ .pt-meta label { font-size:10px; color:rgba(255,255,255,0.35); display:block; text-transform:uppercase; letter-spacing:0.05em; }
+ .pt-meta span { font-size:13px; font-weight:500; color:rgba(255,255,255,0.85); }
+ .pt-vitals { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+ .pt-vital { text-align:center; padding:14px 8px; background:#0F2847; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.06); }
+ .pt-vital-icon { font-size:20px; margin-bottom:4px; }
+ .pt-vital-val { font-family:var(--font-display); font-size:18px; font-weight:700; color:white; }
+ .pt-vital-label { font-size:10px; color:rgba(255,255,255,0.4); margin-top:2px; }
+ .pt-notes { margin-bottom:20px; }
+ .pt-note-item { padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+ .pt-note-item:last-child { border-bottom:none; }
+ .pt-note-date { font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:3px; }
+ .pt-note-text { font-size:13px; color:rgba(255,255,255,0.75); line-height:1.5; }
+ .ec-card { background:rgba(226,75,74,0.08); border:1px solid rgba(226,75,74,0.25); border-radius:var(--radius-sm); padding:14px 16px; display:flex; align-items:center; gap:12px; }
+ .ec-icon { font-size:24px; flex-shrink:0; }
+ .ec-name { font-size:13px; font-weight:600; color:white; }
+ .ec-rel { font-size:11px; color:rgba(255,255,255,0.4); }
+ .ec-phone { font-size:14px; font-weight:700; color:#F87171; }
+ 
+ /* Patient list in triage modal */
+ .pt-list { display:grid; gap:8px; }
+ .pt-list-row { background:#0F2847; border:1px solid rgba(255,255,255,0.07); border-radius:var(--radius-sm); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all 0.15s; }
+ .pt-list-row:hover { border-color:var(--teal-mid); background:rgba(29,158,117,0.08); }
+ .pt-list-row.selected-pt { border-color:var(--teal-mid); background:rgba(29,158,117,0.12); }
+ .pt-list-id { font-size:11px; color:rgba(255,255,255,0.4); font-family:monospace; }
+ .pt-list-name { font-size:13px; font-weight:600; color:white; margin-top:1px; }
+ .pt-list-meta { font-size:11px; color:rgba(255,255,255,0.4); }
+ .pt-detail-pane { background:#091a2e; border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius); padding:20px; margin-top:16px; display:none; }
+ .pt-detail-pane.open { display:block; }
+ 
+ /* Mobile Clinic Routing */
+ .clinic-layout { display:grid; grid-template-columns:300px 1fr; gap:16px; height:500px; }
+ .hh-list-panel { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); overflow-y:auto; }
+ .hh-list-header { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08); font-size:12px; font-weight:600; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.06em; position:sticky; top:0; background:#0C2340; z-index:1; }
+ .hh-item { padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:all 0.15s; }
+ .hh-item:hover { background:rgba(255,255,255,0.04); }
+ .hh-item.active-hh-item { background:rgba(245,158,11,0.1); border-left:3px solid var(--amber); }
+ .hh-id { font-size:12px; font-weight:600; color:var(--amber); font-family:monospace; }
+ .hh-sub { font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px; }
+ .hh-risk-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+ .route-map { background:#0F2847; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); position:relative; overflow:hidden; }
+ .route-map-inner { width:100%; height:100%; background:linear-gradient(160deg, #1a3a1a 0%, #0d2a0d 40%, #0a1e1a 100%); position:relative; }
+ .route-line { position:absolute; pointer-events:none; top:0; left:0; width:100%; height:100%; }
+ .hh-tooltip { position:absolute; background:rgba(10,25,41,0.95); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:10px 14px; font-size:12px; color:white; pointer-events:none; z-index:20; min-width:160px; display:none; }
+ .hh-tooltip.show { display:block; }
+ .hh-tooltip .tt-id { color:var(--amber); font-weight:700; font-family:monospace; font-size:13px; }
+ .hh-tooltip .tt-row { margin-top:4px; color:rgba(255,255,255,0.6); font-size:11px; }
+ 
+ /* Alerts */
+ .alert-card { background:#0C2340; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; display:flex; align-items:flex-start; gap:16px; position:relative; transition:all 0.2s; }
+ .alert-card.critical { border-left:4px solid #F87171; }
+ .alert-card.warning { border-left:4px solid var(--amber); }
+ .alert-card.info { border-left:4px solid var(--teal-mid); }
+ .alert-icon { font-size:26px; flex-shrink:0; margin-top:2px; }
+ .alert-title { font-size:14px; font-weight:700; color:white; margin-bottom:3px; }
+ .alert-sub { font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; }
+ .alert-time { font-size:11px; color:rgba(255,255,255,0.25); margin-top:6px; }
+ .alert-actions { display:flex; gap:8px; margin-top:12px; }
+ .alert-btn-call { background:rgba(226,75,74,0.15); border:1px solid rgba(226,75,74,0.35); color:#F87171; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
+ .alert-btn-call:hover { background:rgba(226,75,74,0.28); }
+ .alert-btn-ack { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; font-family:var(--font-main); transition:all 0.15s; }
+ .alert-btn-ack:hover { background:rgba(255,255,255,0.1); }
+ .alert-badge { position:absolute; top:18px; right:18px; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+ .badge-critical { background:rgba(226,75,74,0.2); color:#F87171; }
+ .badge-warning { background:rgba(245,158,11,0.2); color:#FCD34D; }
+ .badge-resolved { background:rgba(16,185,129,0.15); color:#6EE7B7; }
+ .ec-info-box { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 14px; margin-top:10px; }
+ .ec-info-box .ec-label { font-size:11px; color:rgba(255,255,255,0.35); }
+ .ec-info-box .ec-val { font-size:13px; font-weight:600; color:white; }
+ .ec-info-box .ec-phone-link { font-size:13px; font-weight:700; color:#F87171; }
+ 
+ /* Distance decay in geospatial */
+ .decay-info-panel { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm); padding:14px; margin-top:12px; }
+ .decay-result-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+ .decay-result-row:last-child { border-bottom:none; }
+ .decay-hh-id { font-family:monospace; color:var(--amber); font-weight:600; }
+ .decay-dist { color:rgba(255,255,255,0.6); }
+ .decay-score { font-weight:700; }
+ .score-high { color:#F87171; }
+ .score-med { color:#FCD34D; }
+ .score-low { color:#6EE7B7; }
 </style>
 </head>
 <body>
-
-<!-- ══════════════ LOGIN ══════════════ -->
+ 
 <div class="screen active" id="login">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-      </div>
-      <div class="login-logo-text">Health<span>Link</span> Kenya</div>
-    </div>
-    <div class="login-title">Welcome back</div>
-    <div class="login-sub">Sign in to your Social Worker dashboard</div>
-    <div class="sw-login-profile">
-      <div class="role-icon">🧑‍💼</div>
-      <div class="role-label">Social Worker</div>
-      <div class="role-name">Amara Ochieng</div>
-      <div class="role-desc">Nakuru County Field Officer</div>
-    </div>
-    <button class="login-btn" onclick="enterDashboard()">Sign In →</button>
-  </div>
+ <div class="login-card">
+   <div class="login-logo">
+     <div class="login-logo-icon">
+       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+     </div>
+     <div class="login-logo-text">Health<span>Link</span> Kenya</div>
+   </div>
+   <div class="login-title">Welcome back</div>
+   <div class="login-sub">Sign in to your Social Worker dashboard</div>
+   <div class="sw-login-profile">
+     <div class="role-icon">🧑‍💼</div>
+     <div class="role-label">Social Worker</div>
+     <div class="role-name">Amara Ochieng</div>
+     <div class="role-desc">Nakuru County Field Officer</div>
+   </div>
+   <button class="login-btn" onclick="enterDashboard()">Sign In →</button>
+ </div>
 </div>
-
-<!-- ══════════════ SOCIAL WORKER ══════════════ -->
+ 
 <div class="screen" id="social">
-  <div class="sw-sidebar">
-    <div class="sw-sidebar-logo">
-      <div class="sw-sidebar-logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-      </div>
-      <div class="sw-sidebar-logo-text">Health<span>Link</span></div>
-    </div>
-    <div class="sw-sidebar-user">
-      <div class="sw-avatar">AO</div>
-      <div>
-        <div class="sw-user-name">Amara Ochieng</div>
-        <div class="sw-user-role">Social Worker · Nakuru</div>
-      </div>
-    </div>
-    <nav class="sw-nav">
-      <div class="sw-nav-item active" onclick="swNav('hub',this)"><span class="nav-icon">⊞</span> Outreach Hub</div>
-      <div class="sw-nav-item" onclick="swNav('geomap',this)"><span class="nav-icon">🗺️</span> Geospatial Mapper</div>
-      <div class="sw-nav-item" onclick="swNav('mobile',this)"><span class="nav-icon">🚐</span> Mobile Clinic</div>
-      <div class="sw-nav-item" onclick="swNav('reports',this)"><span class="nav-icon">📊</span> Reports</div>
-      <div class="sw-nav-item" onclick="swNav('alerts',this)"><span class="nav-icon">🔔</span> Alerts <span style="background:#F87171;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;">3</span></div>
-      <div class="sw-nav-item" onclick="swNav('swsettings',this)"><span class="nav-icon">⚙️</span> Settings</div>
-      <div class="sw-nav-item" onclick="swNav('patientdb',this)"><span class="nav-icon">🗄️</span> Patient Database</div>
-    </nav>
-    <div class="sw-sidebar-footer">
-      <div class="logout-btn" onclick="goLogin()">← Sign out</div>
-    </div>
-  </div>
-
-  <div class="sw-main">
-
-    <!-- Page 1: Hub -->
-    <div class="sw-page active" id="sw-hub">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Outreach Hub</div>
-          <div class="sw-page-sub">Nakuru County — select a module to begin</div>
-        </div>
-        <span class="county-badge">📍 Nakuru County</span>
-      </div>
-      <!-- Stats -->
-      <div class="sw-stat-grid">
-        <div class="sw-stat">
-          <div class="sw-stat-val">1,284</div>
-          <div class="sw-stat-label">High-risk households</div>
-          <div class="sw-stat-change up">↑ 12% this month</div>
-        </div>
-        <div class="sw-stat">
-          <div class="sw-stat-val">347</div>
-          <div class="sw-stat-label">Health-evasive profiles</div>
-          <div class="sw-stat-change down">↓ 8 new this week</div>
-        </div>
-        <div class="sw-stat">
-          <div class="sw-stat-val">23</div>
-          <div class="sw-stat-label">Active outreach routes</div>
-          <div class="sw-stat-change up">↑ 3 added</div>
-        </div>
-        <div class="sw-stat">
-          <div class="sw-stat-val">68%</div>
-          <div class="sw-stat-label">Avg. retention score</div>
-          <div class="sw-stat-change up">↑ 2pts vs last month</div>
-        </div>
-      </div>
-      <!-- Hub grid — 7 buttons, Settings removed -->
-      <div class="hub-grid">
-        <div class="hub-btn" onclick="swNav('geomap', document.querySelectorAll('.sw-nav-item')[1])">
-          <span class="hub-icon">🗺️</span>
-          <div class="hub-label">Geospatial Mapper</div>
-          <div class="hub-desc">Risk zones, facilities & household IDs</div>
-        </div>
-        <div class="hub-btn" onclick="swNav('reports', document.querySelectorAll('.sw-nav-item')[3])">
-          <span class="hub-icon">📊</span>
-          <div class="hub-label">Reports</div>
-          <div class="hub-desc">Triage, SHAP & distance decay</div>
-        </div>
-        <div class="hub-btn" onclick="openTriageModal()">
-          <span class="hub-icon">👥</span>
-          <div class="hub-label">Patient Triage</div>
-          <div class="hub-desc">View patient profiles & risk</div>
-        </div>
-        <div class="hub-btn" onclick="swNav('mobile', document.querySelectorAll('.sw-nav-item')[2])">
-          <span class="hub-icon">🚐</span>
-          <div class="hub-label">Mobile Clinic Routing</div>
-          <div class="hub-desc">Household IDs on field map</div>
-        </div>
-        <div class="hub-btn" onclick="swNav('geomap', document.querySelectorAll('.sw-nav-item')[1]); setTimeout(()=>activateDecayMode(),300)">
-          <span class="hub-icon">📉</span>
-          <div class="hub-label">Distance Decay</div>
-          <div class="hub-desc">Pin-drop household range analysis</div>
-        </div>
-        <div class="hub-btn" onclick="swNav('alerts', document.querySelectorAll('.sw-nav-item')[4])">
-          <span class="hub-icon">🔔</span>
-          <div class="hub-label">Alerts</div>
-          <div class="hub-desc">Emergency contacts · High-risk flags</div>
-        </div>
-        <div class="hub-btn">
-          <span class="hub-icon">📤</span>
-          <div class="hub-label">Export</div>
-          <div class="hub-desc">Download county reports</div>
-        </div>
-        <div class="hub-btn" onclick="swNav('patientdb', document.querySelectorAll('.sw-nav-item')[6])" style="border:1px solid rgba(29,158,117,0.35);background:rgba(29,158,117,0.07);">
-          <span class="hub-icon">🗄️</span>
-          <div class="hub-label" style="color:var(--teal-mid);">Patient Database</div>
-          <div class="hub-desc">All registered patients — full records</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 2: Geospatial Mapper -->
-    <div class="sw-page" id="sw-geomap">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Geospatial Mapper</div>
-          <div class="sw-page-sub">Facility coverage, household IDs & distance decay — Nakuru County</div>
-        </div>
-        <div class="sw-map-controls">
-          <div class="map-ctrl-btn active-ctrl" id="ctrl-risk" onclick="toggleLayer('risk',this)">Risk zones</div>
-          <div class="map-ctrl-btn active-ctrl" id="ctrl-facilities" onclick="toggleLayer('facilities',this)">Facilities</div>
-          <div class="map-ctrl-btn" id="ctrl-households" onclick="toggleLayer('households',this)">Households</div>
-          <div class="map-ctrl-btn" id="ctrl-decay" onclick="activateDecayMode()">Decay ring</div>
-        </div>
-      </div>
-      <div class="sw-card" style="margin-bottom:16px;padding:0;overflow:hidden;">
-        <div style="height:440px;position:relative;border-radius:var(--radius);">
-          <div id="nakuru-map" style="width:100%;height:100%;border-radius:var(--radius);"></div>
-          <div id="geo-map-hint" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(10,25,41,0.85);color:rgba(255,255,255,0.7);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;pointer-events:none;border:1px solid rgba(255,255,255,0.1);">🗺️ Real Nakuru County facilities loaded · Toggle layers above</div>
-        </div>
-      </div>
-      <!-- Legend + stats row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
-        <div class="sw-card">
-          <div class="sw-card-title">Legend</div>
-          <div class="legend-row"><div class="legend-dot" style="background:#E24B4A;"></div>High evasion risk HH</div>
-          <div class="legend-row"><div class="legend-dot" style="background:#F59E0B;"></div>Medium risk HH</div>
-          <div class="legend-row"><div class="legend-dot" style="background:#10B981;"></div>Low risk HH</div>
-          <div class="legend-row"><div style="width:10px;height:10px;background:#1D9E75;border-radius:2px;flex-shrink:0;"></div>Hospital / District H.</div>
-          <div class="legend-row"><div style="width:10px;height:10px;background:#185FA5;border-radius:2px;flex-shrink:0;"></div>Health Centre / Clinic</div>
-          <div class="legend-row"><div style="width:10px;height:10px;background:#8B5CF6;border-radius:2px;flex-shrink:0;"></div>Dispensary</div>
-        </div>
-        <div class="sw-card">
-          <div class="sw-card-title">Facilities in view</div>
-          <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;" id="geo-fac-count">Loading…</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);">Real Nakuru County MoH facility data</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;">Ministry of Health registry</div>
-        </div>
-        <div class="sw-card">
-          <div class="sw-card-title">Household IDs mapped</div>
-          <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;">20</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);">Synthetic field survey data · Toggle "Households" layer</div>
-        </div>
-        <div class="sw-card">
-          <div class="sw-card-title">Top barrier — County-wide</div>
-          <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;">Distance</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);">73% of high-risk HHs beyond 35km. SHAP weight: 12.9%</div>
-        </div>
-      </div>
-      <div class="decay-info-panel" id="decay-result-panel" style="display:none;">
-        <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:10px;">📌 Distance decay results from dropped pin</div>
-        <div id="decay-results-content"></div>
-      </div>
-    </div>
-
-    <!-- Page 3: Mobile Clinic Routing -->
-    <div class="sw-page" id="sw-mobile">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Mobile Clinic Routing</div>
-          <div class="sw-page-sub">Select a household to locate it on the map — nearest facilities shown automatically</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span class="county-badge">📍 Nakuru County</span>
-          <button class="btn-outline" style="font-size:12px;padding:7px 14px;" onclick="clearMobileRoute()">Clear route</button>
-        </div>
-      </div>
-
-      <!-- Main layout: left panel + map -->
-      <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px;">
-
-        <!-- Left: scrollable household list -->
-        <div style="background:#0C2340;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;">
-          <!-- Search bar -->
-          <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
-            <input id="mc-search" oninput="filterMCList()" placeholder="🔍 Search household…"
-              style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;padding:7px 12px;border-radius:6px;font-size:12px;font-family:var(--font-main);outline:none;">
-          </div>
-          <!-- Risk filter pills -->
-          <div style="padding:8px 14px;display:flex;gap:6px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
-            <button class="mc-filter-btn active-filter" onclick="setMCFilter('All',this)">All</button>
-            <button class="mc-filter-btn" onclick="setMCFilter('High',this)" style="color:#F87171;border-color:rgba(248,113,113,0.3);">High</button>
-            <button class="mc-filter-btn" onclick="setMCFilter('Medium',this)" style="color:#FCD34D;border-color:rgba(252,211,77,0.3);">Medium</button>
-            <button class="mc-filter-btn" onclick="setMCFilter('Low',this)" style="color:#6EE7B7;border-color:rgba(110,231,183,0.3);">Low</button>
-          </div>
-          <!-- List header -->
-          <div style="padding:8px 14px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;flex-shrink:0;" id="mc-list-count">20 Households</div>
-          <!-- Scrollable list -->
-          <div style="overflow-y:auto;flex:1;" id="mc-hh-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <!-- Right: Leaflet map -->
-        <div style="border-radius:var(--radius);overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.08);">
-          <div id="mobile-clinic-map" style="width:100%;height:100%;"></div>
-          <!-- Floating hint -->
-          <div id="mc-map-hint" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(10,25,41,0.88);color:rgba(255,255,255,0.65);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;pointer-events:none;border:1px solid rgba(255,255,255,0.1);white-space:nowrap;">← Select a household to focus the map</div>
-        </div>
-      </div>
-
-      <!-- Selected HH detail card (shown on selection) -->
-      <div id="mc-detail-card" style="display:none;margin-top:14px;" class="sw-card">
-        <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;">
-          <!-- HH identity -->
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div id="mc-detail-avatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px solid rgba(255,255,255,0.15);">🏠</div>
-            <div>
+ <div class="sw-sidebar">
+   <div class="sw-sidebar-logo">
+     <div class="sw-sidebar-logo-icon">
+       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+     </div>
+     <div class="sw-sidebar-logo-text">Health<span>Link</span></div>
+   </div>
+   <div class="sw-sidebar-user">
+     <div class="sw-avatar">AO</div>
+     <div>
+       <div class="sw-user-name">Amara Ochieng</div>
+       <div class="sw-user-role">Social Worker · Nakuru</div>
+     </div>
+   </div>
+   <nav class="sw-nav">
+     <div class="sw-nav-item active" onclick="swNav('hub',this)"><span class="nav-icon">⊞</span> Outreach Hub</div>
+     <div class="sw-nav-item" onclick="swNav('geomap',this)"><span class="nav-icon">🗺️</span> Geospatial Mapper</div>
+     <div class="sw-nav-item" onclick="swNav('mobile',this)"><span class="nav-icon">🚐</span> Mobile Clinic</div>
+     <div class="sw-nav-item" onclick="swNav('reports',this)"><span class="nav-icon">📊</span> Reports</div>
+     <div class="sw-nav-item" onclick="swNav('alerts',this)"><span class="nav-icon">🔔</span> Alerts <span style="background:#F87171;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;">3</span></div>
+     <div class="sw-nav-item" onclick="swNav('swsettings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+     <div class="sw-nav-item" onclick="swNav('patientdb',this)"><span class="nav-icon">🗄️</span> Patient Database</div>
+   </nav>
+   <div class="sw-sidebar-footer">
+     <div class="logout-btn" onclick="goLogin()">← Sign out</div>
+   </div>
+ </div>
+ 
+ <div class="sw-main">
+ 
+   <div class="sw-page active" id="sw-hub">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Outreach Hub</div>
+         <div class="sw-page-sub">Nakuru County — select a module to begin</div>
+       </div>
+       <span class="county-badge">📍 Nakuru County</span>
+     </div>
+     <div class="sw-stat-grid">
+       <div class="sw-stat">
+         <div class="sw-stat-val" id="hub-high-risk">Loading...</div>
+         <div class="sw-stat-label">High-risk households</div>
+         <div class="sw-stat-change up">↑ 12% this month</div>
+       </div>
+       <div class="sw-stat">
+         <div class="sw-stat-val" id="hub-health-evasive">Loading...</div>
+         <div class="sw-stat-label">Health-evasive profiles</div>
+         <div class="sw-stat-change down">↓ 8 new this week</div>
+       </div>
+       <div class="sw-stat">
+         <div class="sw-stat-val" id="hub-active-routes">Loading...</div>
+         <div class="sw-stat-label">Active outreach routes</div>
+         <div class="sw-stat-change up">↑ 3 added</div>
+       </div>
+       <div class="sw-stat">
+         <div class="sw-stat-val" id="hub-avg-retention">Loading...</div>
+         <div class="sw-stat-label">Avg. retention score</div>
+         <div class="sw-stat-change up">↑ 2pts vs last month</div>
+       </div>
+     </div>
+     <div class="hub-grid">
+       <div class="hub-btn" onclick="swNav('geomap', document.querySelectorAll('.sw-nav-item')[1])">
+         <span class="hub-icon">🗺️</span>
+         <div class="hub-label">Geospatial Mapper</div>
+         <div class="hub-desc">Risk zones, facilities & household IDs</div>
+       </div>
+       <div class="hub-btn" onclick="swNav('reports', document.querySelectorAll('.sw-nav-item')[3])">
+         <span class="hub-icon">📊</span>
+         <div class="hub-label">Reports</div>
+         <div class="hub-desc">Triage, SHAP & distance decay</div>
+       </div>
+       <div class="hub-btn" onclick="openTriageModal()">
+         <span class="hub-icon">👥</span>
+         <div class="hub-label">Patient Triage</div>
+         <div class="hub-desc">View patient profiles & risk</div>
+       </div>
+       <div class="hub-btn" onclick="swNav('mobile', document.querySelectorAll('.sw-nav-item')[2])">
+         <span class="hub-icon">🚐</span>
+         <div class="hub-label">Mobile Clinic Routing</div>
+         <div class="hub-desc">Household IDs on field map</div>
+       </div>
+       <div class="hub-btn" onclick="swNav('geomap', document.querySelectorAll('.sw-nav-item')[1]); setTimeout(()=>activateDecayMode(),300)">
+         <span class="hub-icon">📉</span>
+         <div class="hub-label">Distance Decay</div>
+         <div class="hub-desc">Pin-drop household range analysis</div>
+       </div>
+       <div class="hub-btn" onclick="swNav('alerts', document.querySelectorAll('.sw-nav-item')[4])">
+         <span class="hub-icon">🔔</span>
+         <div class="hub-label">Alerts</div>
+         <div class="hub-desc">Emergency contacts · High-risk flags</div>
+       </div>
+       <div class="hub-btn">
+         <span class="hub-icon">📤</span>
+         <div class="hub-label">Export</div>
+         <div class="hub-desc">Download county reports</div>
+       </div>
+       <div class="hub-btn" onclick="swNav('patientdb', document.querySelectorAll('.sw-nav-item')[6])" style="border:1px solid rgba(29,158,117,0.35);background:rgba(29,158,117,0.07);">
+         <span class="hub-icon">🗄️</span>
+         <div class="hub-label" style="color:var(--teal-mid);">Patient Database</div>
+         <div class="hub-desc">All registered patients — full records</div>
+       </div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-geomap">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Geospatial Mapper</div>
+         <div class="sw-page-sub">Facility coverage, household IDs & distance decay — Nakuru County</div>
+       </div>
+       <div class="sw-map-controls">
+         <div class="map-ctrl-btn active-ctrl" id="ctrl-risk" onclick="toggleLayer('risk',this)">Risk zones</div>
+         <div class="map-ctrl-btn active-ctrl" id="ctrl-facilities" onclick="toggleLayer('facilities',this)">Facilities</div>
+         <div class="map-ctrl-btn" id="ctrl-households" onclick="toggleLayer('households',this)">Households</div>
+         <div class="map-ctrl-btn" id="ctrl-decay" onclick="activateDecayMode()">Decay ring</div>
+       </div>
+     </div>
+     <div class="sw-card" style="margin-bottom:16px;padding:0;overflow:hidden;">
+       <div style="height:440px;position:relative;border-radius:var(--radius);">
+         <div id="nakuru-map" style="width:100%;height:100%;border-radius:var(--radius);"></div>
+         <div id="geo-map-hint" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(10,25,41,0.85);color:rgba(255,255,255,0.7);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;pointer-events:none;border:1px solid rgba(255,255,255,0.1);">🗺️ Real Nakuru County facilities loaded · Toggle layers above</div>
+       </div>
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+       <div class="sw-card">
+         <div class="sw-card-title">Legend</div>
+         <div class="legend-row"><div class="legend-dot" style="background:#E24B4A;"></div>High evasion risk HH</div>
+         <div class="legend-row"><div class="legend-dot" style="background:#F59E0B;"></div>Medium risk HH</div>
+         <div class="legend-row"><div class="legend-dot" style="background:#10B981;"></div>Low risk HH</div>
+         <div class="legend-row"><div style="width:10px;height:10px;background:#1D9E75;border-radius:2px;flex-shrink:0;"></div>Hospital / District H.</div>
+         <div class="legend-row"><div style="width:10px;height:10px;background:#185FA5;border-radius:2px;flex-shrink:0;"></div>Health Centre / Clinic</div>
+         <div class="legend-row"><div style="width:10px;height:10px;background:#8B5CF6;border-radius:2px;flex-shrink:0;"></div>Dispensary</div>
+       </div>
+       <div class="sw-card">
+         <div class="sw-card-title">Facilities in view</div>
+         <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;" id="geo-fac-count">Loading…</div>
+         <div style="font-size:12px;color:rgba(255,255,255,0.45);">Real Nakuru County MoH facility data</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;">Ministry of Health registry</div>
+       </div>
+       <div class="sw-card">
+         <div class="sw-card-title">Household IDs mapped</div>
+         <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;">20</div>
+         <div style="font-size:12px;color:rgba(255,255,255,0.45);">Synthetic field survey data · Toggle "Households" layer</div>
+       </div>
+       <div class="sw-card">
+         <div class="sw-card-title">Top barrier — County-wide</div>
+         <div style="font-size:22px;font-family:var(--font-display);font-weight:700;color:white;margin-bottom:6px;">Distance</div>
+         <div style="font-size:12px;color:rgba(255,255,255,0.45);">73% of high-risk HHs beyond 35km. SHAP weight: 12.9%</div>
+       </div>
+     </div>
+     <div class="decay-info-panel" id="decay-result-panel" style="display:none;">
+       <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:10px;">📌 Distance decay results from dropped pin</div>
+       <div id="decay-results-content"></div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-mobile">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Mobile Clinic Routing</div>
+         <div class="sw-page-sub">Select a household to locate it on the map — nearest facilities shown automatically</div>
+       </div>
+       <div style="display:flex;gap:8px;align-items:center;">
+         <span class="county-badge">📍 Nakuru County</span>
+         <button class="btn-outline" style="font-size:12px;padding:7px 14px;" onclick="clearMobileRoute()">Clear route</button>
+       </div>
+     </div>
+ 
+     <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px;">
+       <div style="background:#0C2340;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;">
+         <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+           <input id="mc-search" oninput="filterMCList()" placeholder="🔍 Search household…" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;padding:7px 12px;border-radius:6px;font-size:12px;font-family:var(--font-main);outline:none;">
+         </div>
+         <div style="padding:8px 14px;display:flex;gap:6px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+           <button class="mc-filter-btn active-filter" onclick="setMCFilter('All',this)">All</button>
+           <button class="mc-filter-btn" onclick="setMCFilter('High',this)" style="color:#F87171;border-color:rgba(248,113,113,0.3);">High</button>
+           <button class="mc-filter-btn" onclick="setMCFilter('Medium',this)" style="color:#FCD34D;border-color:rgba(252,211,77,0.3);">Medium</button>
+           <button class="mc-filter-btn" onclick="setMCFilter('Low',this)" style="color:#6EE7B7;border-color:rgba(110,231,183,0.3);">Low</button>
+         </div>
+         <div style="padding:8px 14px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;flex-shrink:0;" id="mc-list-count">20 Households</div>
+         <div style="overflow-y:auto;flex:1;" id="mc-hh-list"></div>
+       </div>
+       <div style="border-radius:var(--radius);overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.08);">
+         <div id="mobile-clinic-map" style="width:100%;height:100%;"></div>
+         <div id="mc-map-hint" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(10,25,41,0.88);color:rgba(255,255,255,0.65);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;pointer-events:none;border:1px solid rgba(255,255,255,0.1);white-space:nowrap;">← Select a household to focus the map</div>
+       </div>
+     </div>
+ 
+     <div id="mc-detail-card" style="display:none;margin-top:14px;" class="sw-card">
+       <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;">
+         <div style="display:flex;align-items:center;gap:14px;">
+           <div id="mc-detail-avatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px solid rgba(255,255,255,0.15);">🏠</div>
+           <div>
               <div style="font-size:14px;font-weight:700;color:white;font-family:var(--font-display);" id="mc-detail-id">—</div>
               <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px;" id="mc-detail-name">—</div>
-            </div>
-          </div>
-          <!-- Stats row -->
-          <div style="display:flex;gap:28px;justify-content:center;">
-            <div style="text-align:center;">
+           </div>
+         </div>
+         <div style="display:flex;gap:28px;justify-content:center;">
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Sub-county</div>
               <div style="font-size:14px;font-weight:700;color:white;" id="mc-detail-sub">—</div>
-            </div>
-            <div style="text-align:center;">
+           </div>
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Nearest facility</div>
               <div style="font-size:13px;font-weight:700;color:var(--teal-mid);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="mc-detail-fac">—</div>
-            </div>
-            <div style="text-align:center;">
+           </div>
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Distance</div>
               <div style="font-size:18px;font-weight:700;color:var(--amber);" id="mc-detail-dist">—</div>
-            </div>
-            <div style="text-align:center;">
+           </div>
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Risk level</div>
               <div style="font-size:14px;font-weight:700;" id="mc-detail-risk">—</div>
-            </div>
-            <div style="text-align:center;">
+           </div>
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Condition</div>
               <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);" id="mc-detail-cond">—</div>
-            </div>
-            <div style="text-align:center;">
+           </div>
+           <div style="text-align:center;">
               <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Insurance</div>
               <div style="font-size:13px;font-weight:700;" id="mc-detail-ins">—</div>
-            </div>
-          </div>
-          <!-- Action buttons -->
-          <div style="display:flex;gap:8px;">
-            <button class="btn-teal" style="font-size:12px;padding:8px 14px;" onclick="openTriageModal()">👤 View Profile</button>
-            <button class="btn-outline" style="font-size:12px;padding:8px 14px;">📋 Assign Route</button>
-          </div>
-        </div>
-        <!-- Nearby facilities strip -->
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);">
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">3 nearest facilities</div>
-          <div style="display:flex;gap:10px;" id="mc-nearby-facs">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 4: Reports -->
-    <div class="sw-page" id="sw-reports">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Reports</div>
-          <div class="sw-page-sub">Predictive triage, SHAP attribution and distance decay analytics</div>
-        </div>
-        <button class="btn-outline">Export CSV</button>
-      </div>
-      <!-- Triage table -->
-      <div class="sw-card" style="margin-bottom:16px;overflow-x:auto;">
-        <div class="sw-card-title">Predictive risk triage — Nakuru County</div>
-        <table class="triage-table">
-          <thead>
-            <tr>
+           </div>
+         </div>
+         <div style="display:flex;gap:8px;">
+           <button class="btn-teal" style="font-size:12px;padding:8px 14px;" onclick="openTriageModal()">👤 View Profile</button>
+           <button class="btn-outline" style="font-size:12px;padding:8px 14px;">📋 Assign Route</button>
+         </div>
+       </div>
+       <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);">
+         <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">3 nearest facilities</div>
+         <div style="display:flex;gap:10px;" id="mc-nearby-facs">—</div>
+       </div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-reports">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Reports</div>
+         <div class="sw-page-sub">Predictive triage, SHAP attribution and distance decay analytics</div>
+       </div>
+       <button class="btn-outline">Export CSV</button>
+     </div>
+     <div class="sw-card" style="margin-bottom:16px;overflow-x:auto;">
+       <div class="sw-card-title">Predictive risk triage — Nakuru County</div>
+       <table class="triage-table">
+         <thead>
+           <tr>
               <th>Household ID</th>
               <th>Sub-county</th>
               <th>Risk score</th>
@@ -574,30 +540,29 @@ html_source_code = """
               <th>Distance (km)</th>
               <th>Insurance</th>
               <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>HH-NK-00234</td><td>Bahati</td><td><span class="risk-pill risk-h">High 0.87</span></td><td><span class="barrier-tag">Distance</span></td><td>41.2</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
-            <tr><td>HH-NK-00891</td><td>Njoro</td><td><span class="risk-pill risk-h">High 0.82</span></td><td><span class="barrier-tag">Education</span></td><td>28.5</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
-            <tr><td>HH-NK-01102</td><td>Rongai</td><td><span class="risk-pill risk-m">Med 0.65</span></td><td><span class="barrier-tag">Wealth</span></td><td>19.3</td><td>NHIF</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
-            <tr><td>HH-NK-00455</td><td>Subukia</td><td><span class="risk-pill risk-m">Med 0.61</span></td><td><span class="barrier-tag">Distance</span></td><td>36.7</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
-            <tr><td>HH-NK-00678</td><td>Nakuru Town</td><td><span class="risk-pill risk-l">Low 0.31</span></td><td><span class="barrier-tag">Insurance</span></td><td>3.1</td><td>Partial</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- Charts -->
-      <div class="report-grid">
-        <div class="sw-card">
-          <div class="sw-card-title">SHAP feature importance — access model</div>
-          <div class="chart-bar-row"><div class="chart-bar-label">Education</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:73%;"></div></div><div class="chart-bar-val">73.2%</div></div>
-          <div class="chart-bar-row"><div class="chart-bar-label">Distance</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:49%;background:linear-gradient(90deg,#F59E0B,#FCD34D);"></div></div><div class="chart-bar-val">12.9%</div></div>
-          <div class="chart-bar-row"><div class="chart-bar-label">Wealth</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:35%;background:linear-gradient(90deg,#185FA5,#378ADD);"></div></div><div class="chart-bar-val">8.4%</div></div>
-          <div class="chart-bar-row"><div class="chart-bar-label">Insurance</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:20%;background:linear-gradient(90deg,#7C3AED,#A78BFA);"></div></div><div class="chart-bar-val">5.5%</div></div>
-        </div>
-        <div class="sw-card">
-          <div class="sw-card-title">Distance decay curve — GAM estimate</div>
-          <div style="position:relative;height:130px;margin-bottom:8px;">
-            <svg width="100%" height="130" viewBox="0 0 300 130">
+           </tr>
+         </thead>
+         <tbody>
+           <tr><td>HH-NK-00234</td><td>Bahati</td><td><span class="risk-pill risk-h">High 0.87</span></td><td><span class="barrier-tag">Distance</span></td><td>41.2</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
+           <tr><td>HH-NK-00891</td><td>Njoro</td><td><span class="risk-pill risk-h">High 0.82</span></td><td><span class="barrier-tag">Education</span></td><td>28.5</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
+           <tr><td>HH-NK-01102</td><td>Rongai</td><td><span class="risk-pill risk-m">Med 0.65</span></td><td><span class="barrier-tag">Wealth</span></td><td>19.3</td><td>NHIF</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
+           <tr><td>HH-NK-00455</td><td>Subukia</td><td><span class="risk-pill risk-m">Med 0.61</span></td><td><span class="barrier-tag">Distance</span></td><td>36.7</td><td>None</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
+           <tr><td>HH-NK-00678</td><td>Nakuru Town</td><td><span class="risk-pill risk-l">Low 0.31</span></td><td><span class="barrier-tag">Insurance</span></td><td>3.1</td><td>Partial</td><td><button class="triage-action-btn" onclick="openTriageModal()">View Profile</button></td></tr>
+         </tbody>
+       </table>
+     </div>
+     <div class="report-grid">
+       <div class="sw-card">
+         <div class="sw-card-title">SHAP feature importance — access model</div>
+         <div class="chart-bar-row"><div class="chart-bar-label">Education</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:73%;"></div></div><div class="chart-bar-val">73.2%</div></div>
+         <div class="chart-bar-row"><div class="chart-bar-label">Distance</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:49%;background:linear-gradient(90deg,#F59E0B,#FCD34D);"></div></div><div class="chart-bar-val">12.9%</div></div>
+         <div class="chart-bar-row"><div class="chart-bar-label">Wealth</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:35%;background:linear-gradient(90deg,#185FA5,#378ADD);"></div></div><div class="chart-bar-val">8.4%</div></div>
+         <div class="chart-bar-row"><div class="chart-bar-label">Insurance</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:20%;background:linear-gradient(90deg,#7C3AED,#A78BFA);"></div></div><div class="chart-bar-val">5.5%</div></div>
+       </div>
+       <div class="sw-card">
+         <div class="sw-card-title">Distance decay curve — GAM estimate</div>
+         <div style="position:relative;height:130px;margin-bottom:8px;">
+           <svg width="100%" height="130" viewBox="0 0 300 130">
               <path d="M 10 20 C 60 22 100 25 140 60 C 160 80 170 110 290 115" fill="none" stroke="var(--teal-mid)" stroke-width="2.5"/>
               <line x1="175" y1="10" x2="175" y2="120" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 3"/>
               <text x="178" y="22" fill="#F59E0B" font-size="10">35km</text>
@@ -605,215 +570,209 @@ html_source_code = """
               <text x="270" y="130" fill="rgba(255,255,255,0.3)" font-size="9">70km</text>
               <text x="4" y="25" fill="rgba(255,255,255,0.3)" font-size="9">High</text>
               <text x="4" y="115" fill="rgba(255,255,255,0.3)" font-size="9">Low</text>
-            </svg>
-          </div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);">Utilisation drops sharply beyond 35km — mobile clinic deployment recommended for zones &gt; 35km</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 5: Alerts -->
-    <div class="sw-page" id="sw-alerts">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Alerts</div>
-          <div class="sw-page-sub">Emergency contacts, high-risk flags and urgent outreach actions</div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-outline" style="font-size:12px;padding:7px 14px;">Mark all read</button>
-          <span style="background:rgba(226,75,74,0.2);color:#F87171;font-size:12px;font-weight:700;padding:7px 14px;border-radius:var(--radius-sm);">3 Critical</span>
-        </div>
-      </div>
-
-      <!-- Critical alerts -->
-      <div class="alert-card critical">
-        <div class="alert-badge badge-critical">CRITICAL</div>
-        <div class="alert-icon">🚨</div>
-        <div style="flex:1;">
-          <div class="alert-title">Emergency: Rutendo Nyamari — HH-NK-00234</div>
-          <div class="alert-sub">Reported chest pain and difficulty breathing. Last clinic visit: 12 Mar 2026. Missed follow-up scheduled 5 Apr 2026. Hypertension — High dropout risk flagged.</div>
-          <div class="ec-info-box">
-            <div style="font-size:20px;">📞</div>
-            <div>
+           </svg>
+         </div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.35);">Utilisation drops sharply beyond 35km — mobile clinic deployment recommended for zones &gt; 35km</div>
+       </div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-alerts">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Alerts</div>
+         <div class="sw-page-sub">Emergency contacts, high-risk flags and urgent outreach actions</div>
+       </div>
+       <div style="display:flex;gap:8px;">
+         <button class="btn-outline" style="font-size:12px;padding:7px 14px;">Mark all read</button>
+         <span style="background:rgba(226,75,74,0.2);color:#F87171;font-size:12px;font-weight:700;padding:7px 14px;border-radius:var(--radius-sm);">3 Critical</span>
+       </div>
+     </div>
+ 
+     <div class="alert-card critical">
+       <div class="alert-badge badge-critical">CRITICAL</div>
+       <div class="alert-icon">🚨</div>
+       <div style="flex:1;">
+         <div class="alert-title">Emergency: Rutendo Nyamari — HH-NK-00234</div>
+         <div class="alert-sub">Reported chest pain and difficulty breathing. Last clinic visit: 12 Mar 2026. Missed follow-up scheduled 5 Apr 2026. Hypertension — High dropout risk flagged.</div>
+         <div class="ec-info-box">
+           <div style="font-size:20px;">📞</div>
+           <div>
               <div class="ec-label">Emergency Contact</div>
               <div class="ec-val">James Nyamari (Spouse)</div>
-            </div>
-            <div style="margin-left:auto;">
+           </div>
+           <div style="margin-left:auto;">
               <div class="ec-label">Phone</div>
               <div class="ec-phone-link">+254 712 445 678</div>
-            </div>
-          </div>
-          <div class="alert-actions">
-            <button class="alert-btn-call" onclick="callContact('+254 712 445 678')">📞 Call Emergency Contact</button>
-            <button class="alert-btn-ack">Dispatch Mobile Clinic</button>
-            <button class="alert-btn-ack">Acknowledge</button>
-          </div>
-          <div class="alert-time">Triggered today at 08:14 AM · Bahati Sub-county</div>
-        </div>
-      </div>
-
-      <div class="alert-card critical">
-        <div class="alert-badge badge-critical">CRITICAL</div>
-        <div class="alert-icon">🚨</div>
-        <div style="flex:1;">
-          <div class="alert-title">High-risk new profile — HH-NK-00312 (Molo)</div>
-          <div class="alert-sub">New registration flagged risk score 0.91. Distance 52.3km — beyond decay threshold. No insurance. Never attended any facility.</div>
-          <div class="ec-info-box">
-            <div style="font-size:20px;">📞</div>
-            <div>
+           </div>
+         </div>
+         <div class="alert-actions">
+           <button class="alert-btn-call" onclick="callContact('+254 712 445 678')">📞 Call Emergency Contact</button>
+           <button class="alert-btn-ack">Dispatch Mobile Clinic</button>
+           <button class="alert-btn-ack">Acknowledge</button>
+         </div>
+         <div class="alert-time">Triggered today at 08:14 AM · Bahati Sub-county</div>
+       </div>
+     </div>
+ 
+     <div class="alert-card critical">
+       <div class="alert-badge badge-critical">CRITICAL</div>
+       <div class="alert-icon">🚨</div>
+       <div style="flex:1;">
+         <div class="alert-title">High-risk new profile — HH-NK-00312 (Molo)</div>
+         <div class="alert-sub">New registration flagged risk score 0.91. Distance 52.3km — beyond decay threshold. No insurance. Never attended any facility.</div>
+         <div class="ec-info-box">
+           <div style="font-size:20px;">📞</div>
+           <div>
               <div class="ec-label">Emergency Contact</div>
               <div class="ec-val">Grace Wanjiku (Mother)</div>
-            </div>
-            <div style="margin-left:auto;">
+           </div>
+           <div style="margin-left:auto;">
               <div class="ec-label">Phone</div>
               <div class="ec-phone-link">+254 728 990 112</div>
-            </div>
-          </div>
-          <div class="alert-actions">
-            <button class="alert-btn-call" onclick="callContact('+254 728 990 112')">📞 Call Emergency Contact</button>
-            <button class="alert-btn-ack">Schedule Home Visit</button>
-            <button class="alert-btn-ack">Acknowledge</button>
-          </div>
-          <div class="alert-time">Triggered today at 09:32 AM · Molo Sub-county</div>
-        </div>
-      </div>
-
-      <div class="alert-card critical">
-        <div class="alert-badge badge-critical">CRITICAL</div>
-        <div class="alert-icon">⚠️</div>
-        <div style="flex:1;">
-          <div class="alert-title">Missed follow-up — HH-NK-00891 (Njoro)</div>
-          <div class="alert-sub">Patient missed 2 consecutive follow-up appointments. Last contact: 15 Feb 2026. Dropout risk score elevated to 0.82. Education barrier noted.</div>
-          <div class="ec-info-box">
-            <div style="font-size:20px;">📞</div>
-            <div>
+           </div>
+         </div>
+         <div class="alert-actions">
+           <button class="alert-btn-call" onclick="callContact('+254 728 990 112')">📞 Call Emergency Contact</button>
+           <button class="alert-btn-ack">Schedule Home Visit</button>
+           <button class="alert-btn-ack">Acknowledge</button>
+         </div>
+         <div class="alert-time">Triggered today at 09:32 AM · Molo Sub-county</div>
+       </div>
+     </div>
+ 
+     <div class="alert-card critical">
+       <div class="alert-badge badge-critical">CRITICAL</div>
+       <div class="alert-icon">⚠️</div>
+       <div style="flex:1;">
+         <div class="alert-title">Missed follow-up — HH-NK-00891 (Njoro)</div>
+         <div class="alert-sub">Patient missed 2 consecutive follow-up appointments. Last contact: 15 Feb 2026. Dropout risk score elevated to 0.82. Education barrier noted.</div>
+         <div class="ec-info-box">
+           <div style="font-size:20px;">📞</div>
+           <div>
               <div class="ec-label">Emergency Contact</div>
               <div class="ec-val">Peter Kamau (Brother)</div>
-            </div>
-            <div style="margin-left:auto;">
+           </div>
+           <div style="margin-left:auto;">
               <div class="ec-label">Phone</div>
               <div class="ec-phone-link">+254 700 334 891</div>
-            </div>
-          </div>
-          <div class="alert-actions">
-            <button class="alert-btn-call" onclick="callContact('+254 700 334 891')">📞 Call Emergency Contact</button>
-            <button class="alert-btn-ack">Send SMS Reminder</button>
-            <button class="alert-btn-ack">Acknowledge</button>
-          </div>
-          <div class="alert-time">Triggered yesterday at 04:45 PM · Njoro Sub-county</div>
-        </div>
-      </div>
-
-      <div class="alert-card warning">
-        <div class="alert-badge badge-warning">WARNING</div>
-        <div class="alert-icon">🔔</div>
-        <div style="flex:1;">
-          <div class="alert-title">Distance threshold exceeded — HH-NK-00455 (Subukia)</div>
-          <div class="alert-sub">Household distance 36.7km exceeds the 35km decay threshold. Utilisation probability has dropped to 38%. Recommend mobile clinic deployment to Subukia zone this week.</div>
-          <div class="alert-actions">
-            <button class="alert-btn-ack">Route Mobile Clinic</button>
-            <button class="alert-btn-ack">Acknowledge</button>
-          </div>
-          <div class="alert-time">Triggered 2 days ago · Subukia Sub-county</div>
-        </div>
-      </div>
-
-      <div class="alert-card info" style="opacity:0.6;">
-        <div class="alert-badge badge-resolved">RESOLVED</div>
-        <div class="alert-icon">✅</div>
-        <div style="flex:1;">
-          <div class="alert-title">Follow-up completed — HH-NK-00678 (Nakuru Town)</div>
-          <div class="alert-sub">Patient Rutendo Nyamari attended scheduled follow-up. Retention score improved to 78%. No further immediate action required.</div>
-          <div class="alert-time">Resolved 12 Mar 2026 · Nakuru Town</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 6: Settings -->
-    <div class="sw-page" id="sw-swsettings">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Settings</div>
-          <div class="sw-page-sub">Coverage area, alert thresholds and export preferences</div>
-        </div>
-        <button class="btn-teal">Save changes</button>
-      </div>
-      <div class="sw-card" style="max-width:600px;">
-        <div style="margin-bottom:24px;">
-          <div class="settings-label">Coverage area</div>
-          <div class="settings-row">
-            <span class="settings-key">County</span>
-            <input class="settings-input" value="Nakuru">
-          </div>
-          <div class="settings-row">
-            <span class="settings-key">Sub-counties</span>
-            <input class="settings-input" value="All">
-          </div>
-          <div class="settings-row">
-            <span class="settings-key">Distance threshold (km)</span>
-            <input class="settings-input" value="35" id="settings-decay-km" oninput="updateDecayThreshold(this.value)">
-          </div>
-        </div>
-        <div>
-          <div class="settings-label">Alert thresholds</div>
-          <div class="settings-row">
-            <span class="settings-key">High-risk flag (score above)</span>
-            <input class="settings-input" value="0.75">
-          </div>
-          <div class="settings-row">
-            <span class="settings-key">Export format</span>
-            <input class="settings-input" value="CSV">
-          </div>
-          <div class="settings-row">
-            <span class="settings-key">Email alerts</span>
-            <div class="toggle"></div>
-          </div>
-          <div class="settings-row">
-            <span class="settings-key">SMS emergency contact alerts</span>
-            <div class="toggle"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Page 7: Patient Database -->
-    <div class="sw-page" id="sw-patientdb">
-      <div class="sw-topbar">
-        <div>
-          <div class="sw-page-title">Patient Database</div>
-          <div class="sw-page-sub">All registered patients — Nakuru County · <span id="db-count" style="color:var(--teal-mid);font-weight:700;">Loading…</span></div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="db-search" oninput="filterDB()" placeholder="🔍 Search name, ID, sub-county…" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);width:270px;outline:none;">
-          <select id="db-filter-risk" onchange="filterDB()" style="background:#0C2340;border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);cursor:pointer;">
-            <option value="">All Risk Levels</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-          <select id="db-filter-sub" onchange="filterDB()" style="background:#0C2340;border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);cursor:pointer;">
-            <option value="">All Sub-counties</option>
-            <option>Nakuru Town</option><option>Bahati</option><option>Njoro</option><option>Rongai</option>
-            <option>Subukia</option><option>Kuresoi</option><option>Molo</option><option>Gilgil</option><option>Naivasha</option>
-          </select>
-          <button class="btn-teal" onclick="exportDB()" style="font-size:12px;padding:8px 16px;">⬇ Export CSV</button>
-        </div>
-      </div>
-
-      <!-- Summary stats bar -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
-        <div class="sw-stat"><div class="sw-stat-val" id="db-total-stat">—</div><div class="sw-stat-label">Total Registered</div></div>
-        <div class="sw-stat"><div class="sw-stat-val" style="color:#F87171;" id="db-high-stat">—</div><div class="sw-stat-label">High Risk</div></div>
-        <div class="sw-stat"><div class="sw-stat-val" style="color:#FCD34D;" id="db-med-stat">—</div><div class="sw-stat-label">Medium Risk</div></div>
-        <div class="sw-stat"><div class="sw-stat-val" style="color:#6EE7B7;" id="db-low-stat">—</div><div class="sw-stat-label">Low Risk</div></div>
-        <div class="sw-stat"><div class="sw-stat-val" style="color:var(--teal-mid);" id="db-nhif-stat">—</div><div class="sw-stat-label">NHIF Insured</div></div>
-      </div>
-
-      <!-- Table -->
-      <div class="sw-card" style="padding:0;overflow:hidden;">
-        <div style="overflow-x:auto;">
-          <table class="triage-table" id="db-table">
-            <thead>
+           </div>
+         </div>
+         <div class="alert-actions">
+           <button class="alert-btn-call" onclick="callContact('+254 700 334 891')">📞 Call Emergency Contact</button>
+           <button class="alert-btn-ack">Send SMS Reminder</button>
+           <button class="alert-btn-ack">Acknowledge</button>
+         </div>
+         <div class="alert-time">Triggered yesterday at 04:45 PM · Njoro Sub-county</div>
+       </div>
+     </div>
+ 
+     <div class="alert-card warning">
+       <div class="alert-badge badge-warning">WARNING</div>
+       <div class="alert-icon">🔔</div>
+       <div style="flex:1;">
+         <div class="alert-title">Distance threshold exceeded — HH-NK-00455 (Subukia)</div>
+         <div class="alert-sub">Household distance 36.7km exceeds the 35km decay threshold. Utilisation probability has dropped to 38%. Recommend mobile clinic deployment to Subukia zone this week.</div>
+         <div class="alert-actions">
+           <button class="alert-btn-ack">Route Mobile Clinic</button>
+           <button class="alert-btn-ack">Acknowledge</button>
+         </div>
+         <div class="alert-time">Triggered 2 days ago · Subukia Sub-county</div>
+       </div>
+     </div>
+ 
+     <div class="alert-card info" style="opacity:0.6;">
+       <div class="alert-badge badge-resolved">RESOLVED</div>
+       <div class="alert-icon">✅</div>
+       <div style="flex:1;">
+         <div class="alert-title">Follow-up completed — HH-NK-00678 (Nakuru Town)</div>
+         <div class="alert-sub">Patient Rutendo Nyamari attended scheduled follow-up. Retention score improved to 78%. No further immediate action required.</div>
+         <div class="alert-time">Resolved 12 Mar 2026 · Nakuru Town</div>
+       </div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-swsettings">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Settings</div>
+         <div class="sw-page-sub">Coverage area, alert thresholds and export preferences</div>
+       </div>
+       <button class="btn-teal">Save changes</button>
+     </div>
+     <div class="sw-card" style="max-width:600px;">
+       <div style="margin-bottom:24px;">
+         <div class="settings-label">Coverage area</div>
+         <div class="settings-row">
+           <span class="settings-key">County</span>
+           <input class="settings-input" value="Nakuru">
+         </div>
+         <div class="settings-row">
+           <span class="settings-key">Sub-counties</span>
+           <input class="settings-input" value="All">
+         </div>
+         <div class="settings-row">
+           <span class="settings-key">Distance threshold (km)</span>
+           <input class="settings-input" value="35" id="settings-decay-km" oninput="updateDecayThreshold(this.value)">
+         </div>
+       </div>
+       <div>
+         <div class="settings-label">Alert thresholds</div>
+         <div class="settings-row">
+           <span class="settings-key">High-risk flag (score above)</span>
+           <input class="settings-input" value="0.75">
+         </div>
+         <div class="settings-row">
+           <span class="settings-key">Export format</span>
+           <input class="settings-input" value="CSV">
+         </div>
+         <div class="settings-row">
+           <span class="settings-key">Email alerts</span>
+           <div class="toggle"></div>
+         </div>
+         <div class="settings-row">
+           <span class="settings-key">SMS emergency contact alerts</span>
+           <div class="toggle"></div>
+         </div>
+       </div>
+     </div>
+   </div>
+ 
+   <div class="sw-page" id="sw-patientdb">
+     <div class="sw-topbar">
+       <div>
+         <div class="sw-page-title">Patient Database</div>
+         <div class="sw-page-sub">All registered patients — Nakuru County · <span id="db-count" style="color:var(--teal-mid);font-weight:700;">Loading…</span></div>
+       </div>
+       <div style="display:flex;gap:8px;align-items:center;">
+         <input id="db-search" oninput="filterDB()" placeholder="🔍 Search name, ID, sub-county…" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);width:270px;outline:none;">
+         <select id="db-filter-risk" onchange="filterDB()" style="background:#0C2340;border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);cursor:pointer;">
+           <option value="">All Risk Levels</option>
+           <option value="High">High</option>
+           <option value="Medium">Medium</option>
+           <option value="Low">Low</option>
+         </select>
+         <select id="db-filter-sub" onchange="filterDB()" style="background:#0C2340;border:1px solid rgba(255,255,255,0.12);color:white;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-main);cursor:pointer;">
+           <option value="">All Sub-counties</option>
+           <option>Nakuru Town</option><option>Bahati</option><option>Njoro</option><option>Rongai</option>
+           <option>Subukia</option><option>Kuresoi</option><option>Molo</option><option>Gilgil</option><option>Naivasha</option>
+         </select>
+         <button class="btn-teal" onclick="exportDB()" style="font-size:12px;padding:8px 16px;">⬇ Export CSV</button>
+       </div>
+     </div>
+ 
+     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+       <div class="sw-stat"><div class="sw-stat-val" id="db-total-stat">—</div><div class="sw-stat-label">Total Registered</div></div>
+       <div class="sw-stat"><div class="sw-stat-val" style="color:#F87171;" id="db-high-stat">—</div><div class="sw-stat-label">High Risk</div></div>
+       <div class="sw-stat"><div class="sw-stat-val" style="color:#FCD34D;" id="db-med-stat">—</div><div class="sw-stat-label">Medium Risk</div></div>
+       <div class="sw-stat"><div class="sw-stat-val" style="color:#6EE7B7;" id="db-low-stat">—</div><div class="sw-stat-label">Low Risk</div></div>
+       <div class="sw-stat"><div class="sw-stat-val" style="color:var(--teal-mid);" id="db-nhif-stat">—</div><div class="sw-stat-label">NHIF Insured</div></div>
+     </div>
+ 
+     <div class="sw-card" style="padding:0;overflow:hidden;">
+       <div style="overflow-x:auto;">
+         <table class="triage-table" id="db-table">
+           <thead>
               <tr>
                 <th onclick="sortDB('id')" style="cursor:pointer;">Patient ID ↕</th>
                 <th onclick="sortDB('name')" style="cursor:pointer;">Name ↕</th>
@@ -828,724 +787,641 @@ html_source_code = """
                 <th>Assigned SW</th>
                 <th>Action</th>
               </tr>
-            </thead>
-            <tbody id="db-tbody">
+           </thead>
+           <tbody id="db-tbody">
               <tr><td colspan="12" style="text-align:center;color:rgba(255,255,255,0.35);padding:32px;">Loading patient records…</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <!-- Pagination -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);">
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);" id="db-page-info">Page 1 of 1</div>
-          <div style="display:flex;gap:6px;">
-            <button onclick="dbChangePage(-1)" class="map-ctrl-btn" id="db-prev">← Prev</button>
-            <button onclick="dbChangePage(1)" class="map-ctrl-btn" id="db-next">Next →</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /sw-main -->
-</div><!-- /social -->
-
-<!-- ══════════════ PATIENT TRIAGE MODAL ══════════════ -->
-<div class="modal-overlay" id="triage-modal" onclick="closeTriageModalOutside(event)">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title">👥 Patient Triage — Nakuru County</div>
-      <button class="modal-close" onclick="closeTriageModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Patient list -->
-      <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Select patient to view profile</div>
-      <div class="pt-list">
-        <div class="pt-list-row selected-pt" id="pt-row-0" onclick="selectPatient(0)">
-          <div>
-            <div class="pt-list-id">HH-NK-00234</div>
-            <div class="pt-list-name">Rutendo Nyamari</div>
-            <div class="pt-list-meta">Bahati · 34 yrs · Hypertension</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="risk-pill risk-h">High 0.87</span>
-            <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
-          </div>
-        </div>
-        <div class="pt-list-row" id="pt-row-1" onclick="selectPatient(1)">
-          <div>
-            <div class="pt-list-id">HH-NK-00891</div>
-            <div class="pt-list-name">Joseph Mwangi</div>
-            <div class="pt-list-meta">Njoro · 52 yrs · Diabetes T2</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="risk-pill risk-h">High 0.82</span>
-            <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
-          </div>
-        </div>
-        <div class="pt-list-row" id="pt-row-2" onclick="selectPatient(2)">
-          <div>
-            <div class="pt-list-id">HH-NK-01102</div>
-            <div class="pt-list-name">Aisha Karimi</div>
-            <div class="pt-list-meta">Rongai · 29 yrs · Maternal care</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="risk-pill risk-m">Med 0.65</span>
-            <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
-          </div>
-        </div>
-        <div class="pt-list-row" id="pt-row-3" onclick="selectPatient(3)">
-          <div>
-            <div class="pt-list-id">HH-NK-00455</div>
-            <div class="pt-list-name">Samuel Otieno</div>
-            <div class="pt-list-meta">Subukia · 45 yrs · TB Follow-up</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="risk-pill risk-m">Med 0.61</span>
-            <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
-          </div>
-        </div>
-        <div class="pt-list-row" id="pt-row-4" onclick="selectPatient(4)">
-          <div>
-            <div class="pt-list-id">HH-NK-00678</div>
-            <div class="pt-list-name">Fatuma Hassan</div>
-            <div class="pt-list-meta">Nakuru Town · 38 yrs · HIV care</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="risk-pill risk-l">Low 0.31</span>
-            <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Patient detail pane (open by default for first patient) -->
-      <div class="pt-detail-pane open" id="pt-detail-pane">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-  </div>
+           </tbody>
+         </table>
+       </div>
+       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);">
+         <div style="font-size:12px;color:rgba(255,255,255,0.35);" id="db-page-info">Page 1 of 1</div>
+         <div style="display:flex;gap:6px;">
+           <button onclick="dbChangePage(-1)" class="map-ctrl-btn" id="db-prev">← Prev</button>
+           <button onclick="dbChangePage(1)" class="map-ctrl-btn" id="db-next">Next →</button>
+         </div>
+       </div>
+     </div>
+   </div>
+ 
+ </div>
 </div>
-
+ 
+<div class="modal-overlay" id="triage-modal" onclick="closeTriageModalOutside(event)">
+ <div class="modal-box">
+   <div class="modal-header">
+     <div class="modal-title">👥 Patient Triage — Nakuru County</div>
+     <button class="modal-close" onclick="closeTriageModal()">✕</button>
+   </div>
+   <div class="modal-body">
+     <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Select patient to view profile</div>
+     <div class="pt-list">
+       <div class="pt-list-row selected-pt" id="pt-row-0" onclick="selectPatient(0)">
+         <div>
+           <div class="pt-list-id">HH-NK-00234</div>
+           <div class="pt-list-name">Rutendo Nyamari</div>
+           <div class="pt-list-meta">Bahati · 34 yrs · Hypertension</div>
+         </div>
+         <div style="display:flex;align-items:center;gap:10px;">
+           <span class="risk-pill risk-h">High 0.87</span>
+           <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
+         </div>
+       </div>
+       <div class="pt-list-row" id="pt-row-1" onclick="selectPatient(1)">
+         <div>
+           <div class="pt-list-id">HH-NK-00891</div>
+           <div class="pt-list-name">Joseph Mwangi</div>
+           <div class="pt-list-meta">Njoro · 52 yrs · Diabetes T2</div>
+         </div>
+         <div style="display:flex;align-items:center;gap:10px;">
+           <span class="risk-pill risk-h">High 0.82</span>
+           <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
+         </div>
+       </div>
+       <div class="pt-list-row" id="pt-row-2" onclick="selectPatient(2)">
+         <div>
+           <div class="pt-list-id">HH-NK-01102</div>
+           <div class="pt-list-name">Aisha Karimi</div>
+           <div class="pt-list-meta">Rongai · 29 yrs · Maternal care</div>
+         </div>
+         <div style="display:flex;align-items:center;gap:10px;">
+           <span class="risk-pill risk-m">Med 0.65</span>
+           <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
+         </div>
+       </div>
+       <div class="pt-list-row" id="pt-row-3" onclick="selectPatient(3)">
+         <div>
+           <div class="pt-list-id">HH-NK-00455</div>
+           <div class="pt-list-name">Samuel Otieno</div>
+           <div class="pt-list-meta">Subukia · 45 yrs · TB Follow-up</div>
+         </div>
+         <div style="display:flex;align-items:center;gap:10px;">
+           <span class="risk-pill risk-m">Med 0.61</span>
+           <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
+         </div>
+       </div>
+       <div class="pt-list-row" id="pt-row-4" onclick="selectPatient(4)">
+         <div>
+           <div class="pt-list-id">HH-NK-00678</div>
+           <div class="pt-list-name">Fatuma Hassan</div>
+           <div class="pt-list-meta">Nakuru Town · 38 yrs · HIV care</div>
+         </div>
+         <div style="display:flex;align-items:center;gap:10px;">
+           <span class="risk-pill risk-l">Low 0.31</span>
+           <span style="color:rgba(255,255,255,0.3);font-size:16px;">›</span>
+         </div>
+       </div>
+     </div>
+ 
+     <div class="pt-detail-pane open" id="pt-detail-pane"></div>
+   </div>
+ </div>
+</div>
+ 
 <script>
 /* ── DATA ── */
 const patients = [
   {
-    id:'HH-NK-00234', name:'Rutendo Nyamari', initials:'RN',
-    age:'34 yrs', county:'Nakuru / Bahati', insurance:'NHIF', condition:'Hypertension · Follow-up care',
-    bp:'124/82', pulse:'72 BPM', retention:'78%', risk:'Low Dropout',
-    ec_name:'James Nyamari', ec_rel:'Spouse', ec_phone:'+254 712 445 678',
-    notes:[
-      {date:'12 Mar 2026', text:'Blood pressure elevated. Medication reviewed. Follow-up scheduled in 4 weeks.'},
-      {date:'10 Jan 2026', text:'Routine check. Patient reports full medication adherence. No concerns raised.'},
-      {date:'04 Nov 2025', text:'Initial visit. Hypertension diagnosed. NHIF coverage confirmed.'}
+   id:'HH-NK-00234', name:'Rutendo Nyamari', initials:'RN',
+   age:'34 yrs', county:'Nakuru / Bahati', insurance:'NHIF',
+   condition:'Hypertension · Follow-up care',
+   bp:'124/82', pulse:'72 BPM', retention:'78%', risk:'Low Dropout',
+   ec_name:'James Nyamari', ec_rel:'Spouse', ec_phone:'+254 712 445 678',
+   notes:[
+     {date:'12 Mar 2026', text:'Blood pressure elevated. Medication reviewed. Follow-up scheduled in 4 weeks.'},
+     {date:'10 Jan 2026', text:'Routine check. Patient reports full medication adherence. No concerns raised.'},
+     {date:'04 Nov 2025', text:'Initial visit. Hypertension diagnosed. NHIF coverage confirmed.'}
     ]
   },
   {
-    id:'HH-NK-00891', name:'Joseph Mwangi', initials:'JM',
-    age:'52 yrs', county:'Nakuru / Njoro', insurance:'None', condition:'Diabetes Type 2 · Education barrier',
-    bp:'138/90', pulse:'80 BPM', retention:'41%', risk:'High Dropout',
-    ec_name:'Mary Mwangi', ec_rel:'Spouse', ec_phone:'+254 700 334 891',
-    notes:[
-      {date:'15 Feb 2026', text:'Missed follow-up. Blood sugar uncontrolled. CHW outreach attempted.'},
-      {date:'10 Dec 2025', text:'Insulin prescription issued. Patient expressed reluctance to return.'},
-      {date:'02 Oct 2025', text:'Diagnosed Diabetes T2. Education barrier noted in intake form.'}
+   id:'HH-NK-00891', name:'Joseph Mwangi', initials:'JM',
+   age:'52 yrs', county:'Nakuru / Njoro', insurance:'None',
+   condition:'Diabetes Type 2 · Education barrier',
+   bp:'138/90', pulse:'80 BPM', retention:'41%', risk:'High Dropout',
+   ec_name:'Mary Mwangi', ec_rel:'Spouse', ec_phone:'+254 700 334 891',
+   notes:[
+     {date:'15 Feb 2026', text:'Missed follow-up. Blood sugar uncontrolled. CHW outreach attempted.'},
+     {date:'10 Dec 2025', text:'Insulin prescription issued. Patient expressed reluctance to return.'},
+     {date:'02 Oct 2025', text:'Diagnosed Diabetes T2. Education barrier noted in intake form.'}
     ]
   },
   {
-    id:'HH-NK-01102', name:'Aisha Karimi', initials:'AK',
-    age:'29 yrs', county:'Nakuru / Rongai', insurance:'NHIF', condition:'Maternal care · ANC follow-up',
-    bp:'110/70', pulse:'76 BPM', retention:'62%', risk:'Medium',
-    ec_name:'Ali Karimi', ec_rel:'Husband', ec_phone:'+254 755 223 401',
-    notes:[
-      {date:'20 Mar 2026', text:'ANC visit 3 completed. Foetal development normal. Iron supplement issued.'},
-      {date:'15 Feb 2026', text:'ANC visit 2. Blood pressure stable. Advised to attend next visit.'},
-      {date:'10 Jan 2026', text:'First ANC registration. NHIF verified. Wealth barrier flagged — transport subsidy recommended.'}
+   id:'HH-NK-01102', name:'Aisha Karimi', initials:'AK',
+   age:'29 yrs', county:'Nakuru / Rongai', insurance:'NHIF',
+   condition:'Maternal care · ANC follow-up',
+   bp:'110/70', pulse:'76 BPM', retention:'62%', risk:'Medium',
+   ec_name:'Ali Karimi', ec_rel:'Husband', ec_phone:'+254 755 223 401',
+   notes:[
+     {date:'20 Mar 2026', text:'ANC visit 3 completed. Foetal development normal. Iron supplement issued.'},
+     {date:'15 Feb 2026', text:'ANC visit 2. Blood pressure stable. Advised to attend next visit.'},
+     {date:'10 Jan 2026', text:'First ANC registration. NHIF verified. Wealth barrier flagged — transport subsidy recommended.'}
     ]
   },
   {
-    id:'HH-NK-00455', name:'Samuel Otieno', initials:'SO',
-    age:'45 yrs', county:'Nakuru / Subukia', insurance:'None', condition:'TB Follow-up · Distance barrier',
-    bp:'118/76', pulse:'68 BPM', retention:'55%', risk:'Medium',
-    ec_name:'Grace Otieno', ec_rel:'Sister', ec_phone:'+254 733 119 205',
-    notes:[
-      {date:'01 Mar 2026', text:'TB month 4 review. Adherence 85%. Distance to clinic still a concern.'},
-      {date:'05 Jan 2026', text:'TB month 2 check. Sputum negative. Continue DOTS therapy.'},
-      {date:'15 Oct 2025', text:'TB diagnosed. DOTS treatment initiated. Subukia HC assigned.'}
+   id:'HH-NK-00455', name:'Samuel Otieno', initials:'SO',
+   age:'45 yrs', county:'Nakuru / Subukia', insurance:'None', condition:'TB Follow-up · Distance barrier',
+   bp:'118/76', pulse:'68 BPM', retention:'55%', risk:'Medium',
+   ec_name:'Grace Otieno', ec_rel:'Sister', ec_phone:'+254 733 119 205',
+   notes:[
+     {date:'01 Mar 2026', text:'TB month 4 review. Adherence 85%. Distance to clinic still a concern.'},
+     {date:'05 Jan 2026', text:'TB month 2 check. Sputum negative. Continue DOTS therapy.'},
+     {date:'15 Oct 2025', text:'TB diagnosed. DOTS treatment initiated. Subukia HC assigned.'}
     ]
   },
   {
-    id:'HH-NK-00678', name:'Fatuma Hassan', initials:'FH',
-    age:'38 yrs', county:'Nakuru Town', insurance:'Partial', condition:'HIV care · Viral load suppressed',
-    bp:'116/74', pulse:'70 BPM', retention:'88%', risk:'Low Dropout',
-    ec_name:'Amina Hassan', ec_rel:'Daughter', ec_phone:'+254 722 876 543',
-    notes:[
-      {date:'15 Mar 2026', text:'Viral load <50 copies/mL. Patient doing well. ART refill issued for 3 months.'},
-      {date:'10 Dec 2025', text:'6-month review. CD4 count 680. Stable. Continue current ART regimen.'},
-      {date:'02 Sep 2025', text:'Annual check. No opportunistic infections. NHIF partial coverage confirmed.'}
+   id:'HH-NK-00678', name:'Fatuma Hassan', initials:'FH',
+   age:'38 yrs', county:'Nakuru Town', insurance:'Partial', condition:'HIV care · Viral load suppressed',
+   bp:'116/74', pulse:'70 BPM', retention:'88%', risk:'Low Dropout',
+   ec_name:'Amina Hassan', ec_rel:'Daughter', ec_phone:'+254 722 876 543',
+   notes:[
+     {date:'15 Mar 2026', text:'Viral load <50 copies/mL. Patient doing well. ART refill issued for 3 months.'},
+     {date:'10 Dec 2025', text:'6-month review. CD4 count 680. Stable. Continue current ART regimen.'},
+     {date:'02 Sep 2025', text:'Annual check. No opportunistic infections. NHIF partial coverage confirmed.'}
     ]
   }
 ];
-
-/* ── HH data for routing (legacy stub) ── */
-const hhPins = {};
-
+ 
+const nakuruFacilities = [
+ {name:'Nakuru PGH (Provincial General Hospital)', lat:-0.2929, lng:36.0763, type:'hospital'},
+ {name:'Naivasha District Hospital', lat:-0.7145, lng:36.4335, type:'hospital'},
+ {name:'Bahati District Hospital', lat:-0.1703, lng:36.1237, type:'hospital'},
+ {name:'Molo District Hospital', lat:-0.2500, lng:35.7337, type:'hospital'},
+ {name:'Elburgon Sub-District Hospital', lat:-0.3059, lng:35.8097, type:'hospital'},
+ {name:'Gilgil Sub-District Hospital', lat:-0.4987, lng:36.3225, type:'hospital'},
+ {name:'Olenguruone Sub-District Hospital', lat:-0.6200, lng:35.6702, type:'hospital'},
+ {name:'Subukia SDH', lat:-0.0003, lng:36.2283, type:'hospital'},
+ {name:'Kabazi Sub-District Hospital', lat:-0.0764, lng:36.1679, type:'hospital'},
+ {name:'Mediheal Hospital Nakuru', lat:-0.2693, lng:36.1070, type:'hospital'},
+ {name:'Nakuru War Memorial Hospital', lat:-0.2887, lng:36.0763, type:'hospital'},
+ {name:'Sunrise Evans Hospital', lat:-0.2933, lng:36.0591, type:'hospital'},
+ {name:'St Mary\'s Hospital Gilgil', lat:-0.4996, lng:36.3237, type:'hospital'},
+ {name:'Valley Hospital', lat:-0.2887, lng:36.0725, type:'hospital'},
+ {name:'Egerton University Hospital', lat:-0.3710, lng:35.9431, type:'hospital'},
+ {name:'Goldenlife Medical Centre Naivasha', lat:-0.7186, lng:36.4371, type:'hospital'},
+ {name:'Polyclinic Hospital Naivasha', lat:-0.7146, lng:36.4335, type:'hospital'},
+ {name:'Aga Khan University Clinic Naivasha', lat:-0.7146, lng:36.4335, type:'clinic'},
+ {name:'Nakuru Heart Centre', lat:-0.2874, lng:36.0697, type:'clinic'},
+ {name:'Meridian Medical Centre', lat:-0.2833, lng:36.0751, type:'clinic'},
+ {name:'Agakhan Medical Centre Nakuru', lat:-0.2865, lng:36.0635, type:'clinic'},
+ {name:'Avenue Health Care Nakuru', lat:-0.2906, lng:36.0813, type:'clinic'},
+ {name:'Nakuru Clinical Unit', lat:-0.2854, lng:36.0749, type:'clinic'},
+ {name:'Dr Manyara Clinic', lat:-0.2832, lng:36.0744, type:'clinic'},
+ {name:'Lanet Health Centre', lat:-0.2699, lng:36.1071, type:'clinic'},
+ {name:'Langa Langa Health Centre', lat:-0.3024, lng:36.0643, type:'clinic'},
+ {name:'Menengai Health Centre', lat:-0.2793, lng:36.0429, type:'clinic'},
+ {name:'Dundori Health Centre', lat:-0.2506, lng:36.2333, type:'clinic'},
+ {name:'Engashura Health Centre', lat:-0.2596, lng:36.1341, type:'clinic'},
+ {name:'Kabatini Health Centre', lat:-0.2362, lng:36.1671, type:'clinic'},
+ {name:'Kabarak Health Centre', lat:-0.2029, lng:35.9612, type:'clinic'},
+ {name:'Keringet Health Centre', lat:-0.4261, lng:35.6927, type:'clinic'},
+ {name:'Kimeswon Health Centre', lat:-0.3811, lng:35.5038, type:'clinic'},
+ {name:'Ikumbi Health Centre', lat:-0.3450, lng:35.6617, type:'clinic'},
+ {name:'Kiptagich Model Health Centre', lat:-0.5735, lng:35.6140, type:'clinic'},
+ {name:'Rongai Health Centre', lat:-0.2029, lng:35.9612, type:'clinic'},
+ {name:'Mau Narok Health Centre', lat:-0.6318, lng:35.6702, type:'clinic'},
+ {name:'Lare Health Centre', lat:-0.4400, lng:35.9748, type:'clinic'},
+ {name:'Njoro Health Centre', lat:-0.3355, lng:35.9394, type:'clinic'},
+ {name:'Mai Mahiu Health Centre', lat:-0.9773, lng:36.5839, type:'clinic'},
+ {name:'Holy Spirit Health Centre Gilgil', lat:-0.4996, lng:36.3253, type:'clinic'},
+ {name:'Olkaria Community Health Centre', lat:-0.8255, lng:36.2987, type:'clinic'},
+ {name:'Maiela Health Centre', lat:-0.8886, lng:36.1991, type:'clinic'},
+ {name:'Maji Tamu Health Centre', lat:-0.1685, lng:35.9655, type:'clinic'},
+ {name:'Sururu Health Centre', lat:-0.5464, lng:36.0567, type:'clinic'},
+ {name:'PCEA Upendo Health Centre', lat:-0.2913, lng:36.0623, type:'clinic'},
+ {name:'Upper Solai Health Centre', lat:0.0631, lng:36.1999, type:'clinic'},
+ {name:'Bahati Dispensary', lat:-0.1540, lng:36.1536, type:'dispensary'},
+ {name:'Barut Dispensary', lat:-0.1963, lng:36.0338, type:'dispensary'},
+ {name:'Bondeni Dispensary', lat:-0.2906, lng:36.0813, type:'dispensary'},
+ {name:'Mbaruk Dispensary', lat:-0.4996, lng:36.3237, type:'dispensary'},
+ {name:'Gilgil ASTU Dispensary', lat:-0.5008, lng:36.3256, type:'dispensary'},
+ {name:'Eburru Dispensary', lat:-0.5185, lng:36.0757, type:'dispensary'},
+ {name:'Longonot Dispensary', lat:-0.8831, lng:36.4917, type:'dispensary'},
+ {name:'Maraigushu Dispensary', lat:-0.7416, lng:36.5306, type:'dispensary'},
+ {name:'Karagita Dispensary', lat:-0.7767, lng:36.4313, type:'dispensary'},
+ {name:'Karati Dispensary', lat:-0.6903, lng:36.4789, type:'dispensary'},
+ {name:'Ndabibi Dispensary', lat:-0.7114, lng:36.2185, type:'dispensary'},
+ {name:'Moi Ndabi Dispensary', lat:-0.7401, lng:36.2535, type:'dispensary'},
+ {name:'Kipkonyo Dispensary', lat:-0.8194, lng:36.2038, type:'dispensary'},
+ {name:'Kasarani Dispensary', lat:-0.7115, lng:36.2954, type:'dispensary'},
+ {name:'Nyamathi Dispensary', lat:-0.6649, lng:36.4193, type:'dispensary'},
+ {name:'Kijani Mirera Dispensary', lat:-0.8368, lng:36.3553, type:'dispensary'},
+ {name:'Gichobo Dispensary', lat:-0.4565, lng:35.9820, type:'dispensary'},
+ {name:'Teret Dispensary', lat:-0.5179, lng:35.9622, type:'dispensary'},
+ {name:'Mauche Dispensary', lat:-0.5141, lng:35.9744, type:'dispensary'},
+ {name:'Kimugul Dispensary', lat:-0.4400, lng:35.9748, type:'dispensary'},
+ {name:'Bagaria Dispensary', lat:-0.4854, lng:36.0400, type:'dispensary'},
+ {name:'Kianjoya Dispensary', lat:-0.5464, lng:36.0567, type:'dispensary'},
+ {name:'Likia Dispensary', lat:-0.5362, lng:35.9669, type:'dispensary'},
+ {name:'Neissuit Dispensary', lat:-0.3953, lng:35.8991, type:'dispensary'},
+ {name:'Mukorombosi Dispensary', lat:-0.3190, lng:35.7534, type:'dispensary'},
+ {name:'Nyakiambi Dispensary', lat:-0.3012, lng:35.8517, type:'dispensary'},
+ {name:'Marioshoni Dispensary', lat:-0.4121, lng:35.9022, type:'dispensary'},
+ {name:'Sachangwan Dispensary', lat:-0.2052, lng:35.7862, type:'dispensary'},
+ {name:'Subukia Dispensary', lat:0.0003, lng:36.2283, type:'dispensary'},
+ {name:'Munanda Dispensary', lat:-0.0299, lng:36.2047, type:'dispensary'},
+ {name:'Mbogoini Dispensary', lat:-0.1050, lng:36.1274, type:'dispensary'},
+ {name:'Tachasis Dispensary', lat:-0.0448, lng:36.2168, type:'dispensary'},
+ {name:'Simboiyon Dispensary', lat:0.0797, lng:36.2440, type:'dispensary'},
+ {name:'Igwamiti Dispensary', lat:0.1404, lng:36.2451, type:'dispensary'},
+ {name:'Kamara Dispensary', lat:-0.0965, lng:35.6793, type:'dispensary'},
+ {name:'Kuresoi Health Centre', lat:-0.3811, lng:35.5038, type:'dispensary'},
+ {name:'Tendwet Dispensary', lat:-0.5041, lng:35.6973, type:'dispensary'},
+ {name:'Sasimua Dispensary', lat:-0.3579, lng:35.5547, type:'dispensary'},
+ {name:'Mungetho Dispensary', lat:-0.3811, lng:35.5038, type:'dispensary'},
+ {name:'Silibwet Dispensary', lat:-0.4465, lng:35.6375, type:'dispensary'},
+ {name:'Tulwet Dispensary', lat:-0.3450, lng:35.6617, type:'dispensary'},
+ {name:'Kiwamu Dispensary', lat:-0.2163, lng:36.1218, type:'dispensary'},
+ {name:'Ruguru Dispensary', lat:-0.2555, lng:36.1341, type:'dispensary'},
+ {name:'Ndege Dispensary', lat:-0.3055, lng:36.1474, type:'dispensary'},
+ {name:'Nyonjoro Maternity Home', lat:-0.2783, lng:36.1218, type:'dispensary'},
+ {name:'Engendaptich Dispensary', lat:0.3075, lng:36.6557, type:'dispensary'},
+ {name:'Ol-Rongai Dispensary', lat:-0.1687, lng:35.9655, type:'dispensary'},
+ {name:'Sumek Dispensary', lat:-0.1184, lng:35.8589, type:'dispensary'},
+ {name:'Lelechwet Dispensary', lat:-0.2210, lng:35.8278, type:'dispensary'},
+ {name:'Lengenet Dispensary', lat:-0.1235, lng:35.8249, type:'dispensary'},
+ {name:'Kipsetek Dispensary', lat:-0.0835, lng:35.8737, type:'dispensary'},
+ {name:'Ogilgei Dispensary', lat:-0.0353, lng:35.9443, type:'dispensary'},
+ {name:'Kandutura Dispensary', lat:-0.1638, lng:35.9654, type:'dispensary'},
+ {name:'Lower Solai Dispensary', lat:-0.1688, lng:35.9652, type:'dispensary'},
+ {name:'Muricho Dispensary', lat:-0.2210, lng:35.8278, type:'dispensary'},
+ {name:'Ngendaptich Dispensary', lat:0.3075, lng:36.6557, type:'dispensary'},
+ {name:'Elburgon PCEA Dispensary', lat:-0.3059, lng:35.8097, type:'dispensary'},
+ {name:'Turi Dispensary', lat:-0.2860, lng:35.7581, type:'dispensary'},
+ {name:'Arimi Dispensary', lat:-0.2825, lng:35.8513, type:'dispensary'},
+ {name:'FGC of Kenya Molo', lat:-0.2497, lng:35.7343, type:'dispensary'},
+];
+ 
+const syntheticHouseholds = [
+ {id:'HH-NK-00234', lat:-0.1540, lng:36.1400, name:'Rutendo Nyamari', age:34, cond:'Hypertension', risk:'High', dist:41.2, ins:'None', sub:'Bahati'},
+ {id:'HH-NK-00891', lat:-0.3680, lng:35.9700, name:'Joseph Mwangi', age:52, cond:'Diabetes T2', risk:'High', dist:28.5, ins:'None', sub:'Njoro'},
+ {id:'HH-NK-01102', lat:-0.1900, lng:35.9800, name:'Aisha Karimi', age:29, cond:'Maternal Care', risk:'Medium', dist:19.3, ins:'NHIF', sub:'Rongai'},
+ {id:'HH-NK-00455', lat:0.0200, lng:36.2200, name:'Samuel Otieno', age:45, cond:'TB Follow-up', risk:'Medium', dist:36.7, ins:'None', sub:'Subukia'},
+ {id:'HH-NK-00678', lat:-0.3030, lng:36.0750, name:'Fatuma Hassan', age:38, cond:'HIV Care', risk:'Low', dist:3.1, ins:'Partial', sub:'Nakuru Town'},
+ {id:'HH-NK-00312', lat:-0.2700, lng:35.7600, name:'Grace Wambui', age:61, cond:'Hypertension', risk:'High', dist:52.3, ins:'None', sub:'Molo'},
+ {id:'HH-NK-00549', lat:-0.4800, lng:36.3000, name:'Daniel Kimani', age:44, cond:'Diabetes T2', risk:'Medium', dist:22.1, ins:'NHIF', sub:'Gilgil'},
+ {id:'HH-NK-00763', lat:-0.1850, lng:36.1300, name:'Susan Njoki', age:33, cond:'Maternal Care', risk:'Low', dist:7.8, ins:'NHIF', sub:'Bahati'},
+ {id:'HH-NK-00988', lat:-0.4200, lng:35.6900, name:'Peter Koech', age:58, cond:'TB Screening', risk:'High', dist:47.0, ins:'None', sub:'Kuresoi'},
+ {id:'HH-NK-01055', lat:-0.1500, lng:36.0200, name:'Mary Auma', age:27, cond:'Child Nutrition', risk:'Low', dist:11.2, ins:'NHIF', sub:'Rongai'},
+ {id:'HH-NK-01201', lat:-0.4200, lng:35.9900, name:'Charles Njoroge', age:49, cond:'Mental Health', risk:'Medium', dist:31.4, ins:'None', sub:'Njoro'},
+ {id:'HH-NK-01348', lat:0.0700, lng:36.1500, name:'Alice Chebet', age:36, cond:'Hypertension', risk:'High', dist:39.8, ins:'None', sub:'Subukia'},
+ {id:'HH-NK-01420', lat:-0.7200, lng:36.4400, name:'Hassan Mwangi', age:41, cond:'HIV Care', risk:'Medium', dist:18.5, ins:'Partial', sub:'Naivasha'},
+ {id:'HH-NK-01502', lat:-0.9800, lng:36.5800, name:'Joyce Kamau', age:55, cond:'Maternal Anemia', risk:'High', dist:61.0, ins:'None', sub:'Naivasha'},
+ {id:'HH-NK-01630', lat:-0.6400, lng:35.9900, name:'Eric Mutua', age:31, cond:'TB Follow-up', risk:'High', dist:44.5, ins:'None', sub:'Molo'},
+ {id:'HH-NK-01744', lat:-0.0800, lng:35.7500, name:'Janet Wanyama', age:48, cond:'Diabetes T2', risk:'Medium', dist:25.8, ins:'NHIF', sub:'Kuresoi'},
+ {id:'HH-NK-01815', lat:-0.3100, lng:36.0600, name:'Michael Odhiambo', age:23, cond:'HIV Care', risk:'Low', dist:5.5, ins:'NHIF', sub:'Nakuru Town'},
+ {id:'HH-NK-01900', lat:-0.1000, lng:36.2500, name:'Esther Waweru', age:67, cond:'Hypertension', risk:'High', dist:38.9, ins:'None', sub:'Subukia'},
+ {id:'HH-NK-02010', lat:-0.5000, lng:36.0100, name:'Philip Kariuki', age:39, cond:'Child Nutrition', risk:'Medium', dist:28.1, ins:'NHIF', sub:'Njoro'},
+ {id:'HH-NK-02155', lat:-0.2200, lng:35.8500, name:'Catherine Mutai', age:52, cond:'TB Screening', risk:'High', dist:49.2, ins:'None', sub:'Rongai'}
+];
+ 
 /* ── NAVIGATION ── */
 function enterDashboard() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('social').classList.add('active');
+ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+ document.getElementById('social').classList.add('active');
 }
 function goLogin() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('login').classList.add('active');
+ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+ document.getElementById('login').classList.add('active');
 }
 function swNav(page, el) {
-  document.querySelectorAll('.sw-nav-item').forEach(i => i.classList.remove('active'));
-  document.querySelectorAll('.sw-page').forEach(p => p.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('sw-' + page).classList.add('active');
-  if(page === 'geomap') setTimeout(initNakuruMap, 100);
-  if(page === 'mobile') setTimeout(()=>{ initMobileClinicMap(); renderMCList(); }, 100);
+ document.querySelectorAll('.sw-nav-item').forEach(i => i.classList.remove('active'));
+ document.querySelectorAll('.sw-page').forEach(p => p.classList.remove('active'));
+ if(el) el.classList.add('active');
+ document.getElementById('sw-' + page).classList.add('active');
+ if(page === 'geomap') setTimeout(initNakuruMap, 100);
+ if(page === 'mobile') setTimeout(()=>{ initMobileClinicMap(); renderMCList(); }, 100);
 }
-
+ 
 /* ── PATIENT TRIAGE MODAL ── */
 function openTriageModal() {
-  document.getElementById('triage-modal').classList.add('open');
-  renderPatientDetail(0);
+ document.getElementById('triage-modal').classList.add('open');
+ renderPatientDetail(0);
 }
 function closeTriageModal() {
-  document.getElementById('triage-modal').classList.remove('open');
+ document.getElementById('triage-modal').classList.remove('open');
 }
 function closeTriageModalOutside(e) {
-  if(e.target === document.getElementById('triage-modal')) closeTriageModal();
+ if(e.target === document.getElementById('triage-modal')) closeTriageModal();
 }
-
+ 
 function selectPatient(idx) {
-  document.querySelectorAll('.pt-list-row').forEach(r => r.classList.remove('selected-pt'));
-  document.getElementById('pt-row-' + idx).classList.add('selected-pt');
-  renderPatientDetail(idx);
+ document.querySelectorAll('.pt-list-row').forEach(r => r.classList.remove('selected-pt'));
+ document.getElementById('pt-row-' + idx).classList.add('selected-pt');
+ renderPatientDetail(idx);
 }
-
+ 
 function renderPatientDetail(idx) {
-  const p = patients[idx];
-  const riskColor = p.risk.includes('High') ? '#F87171' : p.risk === 'Medium' ? '#FCD34D' : '#6EE7B7';
-  const pane = document.getElementById('pt-detail-pane');
-  pane.classList.add('open');
-  pane.innerHTML = `
-    <div class="pt-profile-header">
-      <div class="pt-big-avatar">${p.initials}</div>
-      <div style="flex:1;">
-        <div class="pt-name">${p.name}</div>
-        <div class="pt-condition">${p.condition}</div>
-        <div class="pt-meta-grid">
-          <div class="pt-meta"><label>ID</label><span>${p.id}</span></div>
-          <div class="pt-meta"><label>Age</label><span>${p.age}</span></div>
-          <div class="pt-meta"><label>County / Sub-county</label><span>${p.county}</span></div>
-          <div class="pt-meta"><label>Insurance</label><span>${p.insurance}</span></div>
-          <div class="pt-meta"><label>Dropout Risk</label><span style="color:${riskColor};font-weight:700;">${p.risk}</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="pt-vitals">
-      <div class="pt-vital"><div class="pt-vital-icon">❤️</div><div class="pt-vital-val">${p.bp}</div><div class="pt-vital-label">Blood Pressure</div></div>
-      <div class="pt-vital"><div class="pt-vital-icon">🩺</div><div class="pt-vital-val">${p.pulse}</div><div class="pt-vital-label">Pulse</div></div>
-      <div class="pt-vital"><div class="pt-vital-icon">📊</div><div class="pt-vital-val">${p.retention}</div><div class="pt-vital-label">Retention Score</div></div>
-      <div class="pt-vital"><div class="pt-vital-icon">🏠</div><div class="pt-vital-val">${p.id.split('-').pop()}</div><div class="pt-vital-label">Household ID</div></div>
-    </div>
-    <div class="pt-notes">
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Clinical notes</div>
-      ${p.notes.map(n => `<div class="pt-note-item"><div class="pt-note-date">${n.date}</div><div class="pt-note-text">${n.text}</div></div>`).join('')}
-    </div>
-    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Emergency contact</div>
-    <div class="ec-card">
-      <div class="ec-icon">🆘</div>
-      <div style="flex:1;">
-        <div class="ec-name">${p.ec_name}</div>
-        <div class="ec-rel">${p.ec_rel}</div>
-      </div>
-      <div>
-        <div class="ec-phone">${p.ec_phone}</div>
-        <button class="alert-btn-call" style="margin-top:8px;" onclick="callContact('${p.ec_phone}')">📞 Call now</button>
-      </div>
-    </div>`;
+ const p = patients[idx];
+ const riskColor = p.risk.includes('High') ? '#F87171' : p.risk === 'Medium' ? '#FCD34D' : '#6EE7B7';
+ const pane = document.getElementById('pt-detail-pane');
+ pane.classList.add('open');
+ pane.innerHTML = `
+   <div class="pt-profile-header">
+     <div class="pt-big-avatar">${p.initials}</div>
+     <div style="flex:1;">
+       <div class="pt-name">${p.name}</div>
+       <div class="pt-condition">${p.condition}</div>
+       <div class="pt-meta-grid">
+         <div class="pt-meta"><label>ID</label><span>${p.id}</span></div>
+         <div class="pt-meta"><label>Age</label><span>${p.age}</span></div>
+         <div class="pt-meta"><label>County / Sub-county</label><span>${p.county}</span></div>
+         <div class="pt-meta"><label>Insurance</label><span>${p.insurance}</span></div>
+         <div class="pt-meta"><label>Dropout Risk</label><span style="color:${riskColor};font-weight:700;">${p.risk}</span></div>
+       </div>
+     </div>
+   </div>
+   <div class="pt-vitals">
+     <div class="pt-vital"><div class="pt-vital-icon">❤️</div><div class="pt-vital-val">${p.bp}</div><div class="pt-vital-label">Blood Pressure</div></div>
+     <div class="pt-vital"><div class="pt-vital-icon">🩺</div><div class="pt-vital-val">${p.pulse}</div><div class="pt-vital-label">Pulse</div></div>
+     <div class="pt-vital"><div class="pt-vital-icon">📊</div><div class="pt-vital-val">${p.retention}</div><div class="pt-vital-label">Retention Score</div></div>
+     <div class="pt-vital"><div class="pt-vital-icon">🏠</div><div class="pt-vital-val">${p.id.split('-').pop()}</div><div class="pt-vital-label">Household ID</div></div>
+   </div>
+   <div class="pt-notes">
+     <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Clinical notes</div>
+     ${p.notes.map(n => `<div class="pt-note-item"><div class="pt-note-date">${n.date}</div><div class="pt-note-text">${n.text}</div></div>`).join('')}
+   </div>
+   <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Emergency contact</div>
+   <div class="ec-card">
+     <div class="ec-icon">🆘</div>
+     <div style="flex:1;">
+       <div class="ec-name">${p.ec_name}</div>
+       <div class="ec-rel">${p.ec_rel}</div>
+     </div>
+     <div>
+       <div class="ec-phone">${p.ec_phone}</div>
+       <button class="alert-btn-call" style="margin-top:8px;" onclick="callContact('${p.ec_phone}')">📞 Call now</button>
+     </div>
+   </div>`;
 }
-
+ 
 /* ── MOBILE CLINIC ROUTING — LEAFLET ── */
 let mcMap = null;
 let mcHHMarkers = [];
 let mcFacMarkers = [];
 let mcRouteLine = null;
-let mcSelectedMarker = null;
 let mcFilter = 'All';
 let mcSearch = '';
-
+ 
 function initMobileClinicMap() {
-  if(mcMap) return;
-  mcMap = L.map('mobile-clinic-map', { center:[-0.310, 36.080], zoom:9, zoomControl:true });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution:'© OpenStreetMap © CARTO', maxZoom:18
-  }).addTo(mcMap);
-
-  // Add all facilities as subtle background dots
-  nakuruFacilities.forEach(f => {
-    const color = f.type==='hospital' ? '#1D9E75' : f.type==='clinic' ? '#185FA5' : '#8B5CF6';
-    const size = f.type==='hospital' ? 9 : f.type==='clinic' ? 7 : 5;
-    const icon = L.divIcon({
-      className:'',
-      html:`<div style="width:${size}px;height:${size}px;background:${color};border-radius:${f.type==='dispensary'?'50%':'2px'};border:1.5px solid rgba(255,255,255,0.6);box-shadow:0 0 5px ${color}70;opacity:0.8;"></div>`,
-      iconAnchor:[size/2,size/2]
-    });
-    const m = L.marker([f.lat,f.lng],{icon,zIndexOffset:0})
-      .bindPopup(`<b>${f.name}</b><br><span style="color:#aaa;font-size:11px;">${f.type.charAt(0).toUpperCase()+f.type.slice(1)}</span>`);
-    mcFacMarkers.push({marker:m, data:f});
-    m.addTo(mcMap);
+ if(mcMap) return;
+ mcMap = L.map('mobile-clinic-map', { center:[-0.310, 36.080], zoom:9, zoomControl:true });
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+   attribution:'© OpenStreetMap © CARTO', maxZoom:18
+ }).addTo(mcMap);
+ 
+ nakuruFacilities.forEach(f => {
+   const color = f.type==='hospital' ? '#1D9E75' : f.type==='clinic' ? '#185FA5' : '#8B5CF6';
+   const size = f.type==='hospital' ? 9 : f.type==='clinic' ? 7 : 5;
+   const icon = L.divIcon({
+     className:'',
+     html:`<div style="width:${size}px;height:${size}px;background:${color};border-radius:${f.type==='dispensary'?'50%':'2px'};border:1.5px solid rgba(255,255,255,0.6);box-shadow:0 0 5px ${color}70;opacity:0.8;"></div>`,
+     iconAnchor:[size/2,size/2]
+   });
+   const m = L.marker([f.lat,f.lng],{icon,zIndexOffset:0}).bindPopup(`<b>${f.name}</b><br><span style="color:#aaa;font-size:11px;">${f.type.charAt(0).toUpperCase()+f.type.slice(1)}</span>`);
+   mcFacMarkers.push({marker:m, data:f});
+   m.addTo(mcMap);
   });
-
-  // Add household markers
-  syntheticHouseholds.forEach(hh => {
-    const color = hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
-    const icon = L.divIcon({
-      className:'',
-      html:`<div class="mc-hh-dot" data-id="${hh.id}" style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;transition:transform 0.15s;"></div>`,
-      iconAnchor:[7,7]
-    });
-    const m = L.marker([hh.lat,hh.lng],{icon,zIndexOffset:100})
-      .bindTooltip(`<b>${hh.id}</b> · ${hh.name}<br>${hh.sub} · ${hh.risk} Risk`,{direction:'top',offset:[0,-6]})
-      .on('click',()=>selectMCHousehold(hh));
-    mcHHMarkers.push({marker:m, data:hh});
-    m.addTo(mcMap);
+ 
+ syntheticHouseholds.forEach(hh => {
+   const color = hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
+   const icon = L.divIcon({
+     className:'',
+     html:`<div class="mc-hh-dot" data-id="${hh.id}" style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;transition:transform 0.15s;"></div>`,
+     iconAnchor:[7,7]
+   });
+   const m = L.marker([hh.lat,hh.lng],{icon,zIndexOffset:100})
+     .bindTooltip(`<b>${hh.id}</b> · ${hh.name}<br>${hh.sub} · ${hh.risk} Risk`,{direction:'top',offset:[0,-6]})
+     .on('click',()=>selectMCHousehold(hh));
+   mcHHMarkers.push({marker:m, data:hh});
+   m.addTo(mcMap);
   });
-
-  renderMCList();
+ 
+ renderMCList();
 }
-
+ 
 function haversineKm(lat1,lng1,lat2,lng2){
-  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+ const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+ const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+ return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
-
+ 
 function getNearestFacilities(hh, n=3){
-  return nakuruFacilities
-    .map(f=>({...f, km: haversineKm(hh.lat,hh.lng,f.lat,f.lng)}))
-    .sort((a,b)=>a.km-b.km)
-    .slice(0,n);
+ return nakuruFacilities
+   .map(f=>({...f, km: haversineKm(hh.lat,hh.lng,f.lat,f.lng)}))
+   .sort((a,b)=>a.km-b.km)
+   .slice(0,n);
 }
-
+ 
 function selectMCHousehold(hh){
-  // Reset previous selected marker visual
-  mcHHMarkers.forEach(({marker,data})=>{
-    const color=data.risk==='High'?'#F87171':data.risk==='Medium'?'#FCD34D':'#6EE7B7';
-    marker.setIcon(L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;"></div>`,iconAnchor:[7,7]}));
+ mcHHMarkers.forEach(({marker,data})=>{
+   const color=data.risk==='High'?'#F87171':data.risk==='Medium'?'#FCD34D':'#6EE7B7';
+   marker.setIcon(L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;"></div>`,iconAnchor:[7,7]}));
   });
-
-  // Highlight selected
-  const color=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
-  const selIcon=L.divIcon({className:'',html:`<div style="width:20px;height:20px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 0 16px ${color},0 0 4px rgba(0,0,0,0.5);cursor:pointer;transform:scale(1.2);"></div>`,iconAnchor:[10,10]});
-  const selMarker=mcHHMarkers.find(m=>m.data.id===hh.id);
-  if(selMarker) selMarker.marker.setIcon(selIcon);
-
-  // Get 3 nearest facilities
-  const nearest=getNearestFacilities(hh,3);
-  const closestFac=nearest[0];
-
-  // Draw route line to nearest facility
-  if(mcRouteLine) mcMap.removeLayer(mcRouteLine);
-  mcRouteLine=L.polyline([[hh.lat,hh.lng],[closestFac.lat,closestFac.lng]],{
-    color:'#F59E0B', weight:2.5, dashArray:'8 5', opacity:0.85
-  }).addTo(mcMap);
-
-  // Pulse the nearest facility briefly
-  const facEntry=mcFacMarkers.find(fm=>fm.data.name===closestFac.name);
-  if(facEntry){
-    const fc=closestFac.type==='hospital'?'#1D9E75':closestFac.type==='clinic'?'#185FA5':'#8B5CF6';
-    const pulseIcon=L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${fc};border-radius:${closestFac.type==='dispensary'?'50%':'3px'};border:2px solid white;box-shadow:0 0 14px ${fc};"></div>`,iconAnchor:[7,7]});
-    facEntry.marker.setIcon(pulseIcon);
-    setTimeout(()=>{
-      const sz=closestFac.type==='hospital'?9:closestFac.type==='clinic'?7:5;
-      facEntry.marker.setIcon(L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;background:${fc};border-radius:${closestFac.type==='dispensary'?'50%':'2px'};border:1.5px solid rgba(255,255,255,0.6);box-shadow:0 0 5px ${fc}70;opacity:0.8;"></div>`,iconAnchor:[sz/2,sz/2]}));
-    },2500);
+ 
+ const color=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
+ const selIcon=L.divIcon({className:'',html:`<div style="width:20px;height:20px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 0 16px ${color},0 0 4px rgba(0,0,0,0.5);cursor:pointer;transform:scale(1.2);"></div>`,iconAnchor:[10,10]});
+ const selMarker=mcHHMarkers.find(m=>m.data.id===hh.id);
+ if(selMarker) selMarker.marker.setIcon(selIcon);
+ 
+ const nearest=getNearestFacilities(hh,3);
+ const closestFac=nearest[0];
+ 
+ if(mcRouteLine) mcMap.removeLayer(mcRouteLine);
+ mcRouteLine=L.polyline([[hh.lat,hh.lng],[closestFac.lat,closestFac.lng]],{
+   color:'#F59E0B', weight:2.5, dashArray:'8 5', opacity:0.85
+ }).addTo(mcMap);
+ 
+ const facEntry=mcFacMarkers.find(fm=>fm.data.name===closestFac.name);
+ if(facEntry){
+   const fc=closestFac.type==='hospital'?'#1D9E75':closestFac.type==='clinic'?'#185FA5':'#8B5CF6';
+   const pulseIcon=L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${fc};border-radius:${closestFac.type==='dispensary'?'50%':'3px'};border:2px solid white;box-shadow:0 0 14px ${fc};"></div>`,iconAnchor:[7,7]});
+   facEntry.marker.setIcon(pulseIcon);
+   setTimeout(()=>{
+     const sz=closestFac.type==='hospital'?9:closestFac.type==='clinic'?7:5;
+     facEntry.marker.setIcon(L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;background:${fc};border-radius:${closestFac.type==='dispensary'?'50%':'2px'};border:1.5px solid rgba(255,255,255,0.6);box-shadow:0 0 5px ${fc}70;opacity:0.8;"></div>`,iconAnchor:[sz/2,sz/2]}));
+   },2500);
   }
-
-  // Zoom to fit HH + nearest facility
-  mcMap.fitBounds([[hh.lat,hh.lng],[closestFac.lat,closestFac.lng]],{padding:[60,60],maxZoom:13});
-
-  // Update hint
-  document.getElementById('mc-map-hint').textContent=`📍 ${hh.id} · ${closestFac.name} (${closestFac.km.toFixed(1)} km away)`;
-
-  // Highlight list item
-  document.querySelectorAll('.mc-hh-item').forEach(el=>el.classList.remove('active-hh-item'));
-  const li=document.getElementById('mc-li-'+hh.id.replace(/-/g,''));
-  if(li){li.classList.add('active-hh-item');li.scrollIntoView({block:'nearest',behavior:'smooth'});}
-
-  // Update detail card
-  const ins=hh.ins;
-  const insColor=ins==='NHIF'?'#6EE7B7':ins==='Partial'?'#FCD34D':'#F87171';
-  const riskColor=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
-  const bgColor=hh.risk==='High'?'rgba(248,113,113,0.15)':hh.risk==='Medium'?'rgba(252,211,77,0.15)':'rgba(110,231,183,0.15)';
-  document.getElementById('mc-detail-card').style.display='block';
-  document.getElementById('mc-detail-avatar').style.background=bgColor;
-  document.getElementById('mc-detail-id').textContent=hh.id;
-  document.getElementById('mc-detail-name').textContent=hh.name+' · '+hh.age+' yrs';
-  document.getElementById('mc-detail-sub').textContent=hh.sub;
-  document.getElementById('mc-detail-fac').textContent=closestFac.name;
-  document.getElementById('mc-detail-dist').textContent=closestFac.km.toFixed(1)+' km';
-  document.getElementById('mc-detail-risk').textContent=hh.risk;
-  document.getElementById('mc-detail-risk').style.color=riskColor;
-  document.getElementById('mc-detail-cond').textContent=hh.cond;
-  document.getElementById('mc-detail-ins').textContent=ins;
-  document.getElementById('mc-detail-ins').style.color=insColor;
-  // Nearby facility chips
-  const typIcon=t=>t==='hospital'?'🏥':t==='clinic'?'🏨':'💊';
-  document.getElementById('mc-nearby-facs').innerHTML=nearest.map((f,i)=>`
-    <div style="flex:1;background:#0F2847;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;${i===0?'border-color:rgba(245,158,11,0.4);':''}" >
-      <span style="font-size:18px;">${typIcon(f.type)}</span>
-      <div style="min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:${i===0?'#FCD34D':'rgba(255,255,255,0.75)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">${f.km.toFixed(1)} km · ${f.type}</div>
-      </div>
-    </div>`).join('');
+ 
+ mcMap.fitBounds([[hh.lat,hh.lng],[closestFac.lat,closestFac.lng]],{padding:[60,60],maxZoom:13});
+ document.getElementById('mc-map-hint').textContent=`📍 ${hh.id} · ${closestFac.name} (${closestFac.km.toFixed(1)} km away)`;
+ document.querySelectorAll('.mc-hh-item').forEach(el=>el.classList.remove('active-hh-item'));
+ const li=document.getElementById('mc-li-'+hh.id.replace(/-/g,''));
+ if(li){li.classList.add('active-hh-item');li.scrollIntoView({block:'nearest',behavior:'smooth'});}
+ 
+ const ins=hh.ins;
+ const insColor=ins==='NHIF'?'#6EE7B7':ins==='Partial'?'#FCD34D':'#F87171';
+ const riskColor=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
+ const bgColor=hh.risk==='High'?'rgba(248,113,113,0.15)':hh.risk==='Medium'?'rgba(252,211,77,0.15)':'rgba(110,231,183,0.15)';
+ document.getElementById('mc-detail-card').style.display='block';
+ document.getElementById('mc-detail-avatar').style.background=bgColor;
+ document.getElementById('mc-detail-id').textContent=hh.id;
+ document.getElementById('mc-detail-name').textContent=hh.name+' · '+hh.age+' yrs';
+ document.getElementById('mc-detail-sub').textContent=hh.sub;
+ document.getElementById('mc-detail-fac').textContent=closestFac.name;
+ document.getElementById('mc-detail-dist').textContent=closestFac.km.toFixed(1)+' km';
+ document.getElementById('mc-detail-risk').textContent=hh.risk;
+ document.getElementById('mc-detail-risk').style.color=riskColor;
+ document.getElementById('mc-detail-cond').textContent=hh.cond;
+ document.getElementById('mc-detail-ins').textContent=ins;
+ document.getElementById('mc-detail-ins').style.color=insColor;
+ 
+ const typIcon=t=>t==='hospital'?'🏥':t==='clinic'?'🏨':'💊';
+ document.getElementById('mc-nearby-facs').innerHTML=nearest.map((f,i)=>`
+   <div style="flex:1;background:#0F2847;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;${i===0?'border-color:rgba(245,158,11,0.4);':''}">
+     <span style="font-size:18px;">${typIcon(f.type)}</span>
+     <div style="min-width:0;">
+       <div style="font-size:12px;font-weight:600;color:${i===0?'#FCD34D':'rgba(255,255,255,0.75)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+       <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">${f.km.toFixed(1)} km · ${f.type}</div>
+     </div>
+   </div>`).join('');
 }
-
+ 
 function clearMobileRoute(){
-  if(mcRouteLine){mcMap.removeLayer(mcRouteLine);mcRouteLine=null;}
-  document.getElementById('mc-detail-card').style.display='none';
-  document.getElementById('mc-map-hint').textContent='← Select a household to focus the map';
-  document.querySelectorAll('.mc-hh-item').forEach(el=>el.classList.remove('active-hh-item'));
-  // Reset all HH markers
-  mcHHMarkers.forEach(({marker,data})=>{
-    const color=data.risk==='High'?'#F87171':data.risk==='Medium'?'#FCD34D':'#6EE7B7';
-    marker.setIcon(L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;"></div>`,iconAnchor:[7,7]}));
+ if(mcRouteLine){mcMap.removeLayer(mcRouteLine);mcRouteLine=null;}
+ document.getElementById('mc-detail-card').style.display='none';
+ document.getElementById('mc-map-hint').textContent='← Select a household to focus the map';
+ document.querySelectorAll('.mc-hh-item').forEach(el=>el.classList.remove('active-hh-item'));
+ mcHHMarkers.forEach(({marker,data})=>{
+   const color=data.risk==='High'?'#F87171':data.risk==='Medium'?'#FCD34D':'#6EE7B7';
+   marker.setIcon(L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2.5px solid rgba(255,255,255,0.9);box-shadow:0 0 10px ${color}90;cursor:pointer;"></div>`,iconAnchor:[7,7]}));
   });
-  if(mcMap) mcMap.setView([-0.310,36.080],9);
+ if(mcMap) mcMap.setView([-0.310,36.080],9);
 }
-
+ 
 function setMCFilter(val, el){
-  mcFilter=val;
-  document.querySelectorAll('.mc-filter-btn').forEach(b=>b.classList.remove('active-filter'));
-  el.classList.add('active-filter');
-  renderMCList();
+ mcFilter=val;
+ document.querySelectorAll('.mc-filter-btn').forEach(b=>b.classList.remove('active-filter'));
+ el.classList.add('active-filter');
+ renderMCList();
 }
-
+ 
 function filterMCList(){
-  mcSearch=document.getElementById('mc-search').value.toLowerCase();
-  renderMCList();
+ mcSearch=document.getElementById('mc-search').value.toLowerCase();
+ renderMCList();
 }
-
+ 
 function renderMCList(){
-  const filtered=syntheticHouseholds.filter(hh=>{
-    const matchR=mcFilter==='All'||hh.risk===mcFilter;
-    const matchS=!mcSearch||(hh.id.toLowerCase().includes(mcSearch)||hh.name.toLowerCase().includes(mcSearch)||hh.sub.toLowerCase().includes(mcSearch)||hh.cond.toLowerCase().includes(mcSearch));
-    return matchR&&matchS;
+ const filtered=syntheticHouseholds.filter(hh=>{
+   const matchR=mcFilter==='All'||hh.risk===mcFilter;
+   const matchS=!mcSearch||(hh.id.toLowerCase().includes(mcSearch)||hh.name.toLowerCase().includes(mcSearch)||hh.sub.toLowerCase().includes(mcSearch)||hh.cond.toLowerCase().includes(mcSearch));
+   return matchR&&matchS;
   });
-  document.getElementById('mc-list-count').textContent=filtered.length+' Household'+(filtered.length!==1?'s':'');
-  document.getElementById('mc-hh-list').innerHTML=filtered.map(hh=>{
-    const color=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
-    const safeId='mc-li-'+hh.id.replace(/-/g,'');
-    return `<div class="mc-hh-item hh-item" id="${safeId}" onclick='selectMCHousehold(${JSON.stringify(hh)})'>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;box-shadow:0 0 6px ${color};"></div>
-        <div style="min-width:0;">
-          <div style="font-size:12px;font-weight:700;color:${color};font-family:monospace;">${hh.id}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${hh.name} · ${hh.sub}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:1px;">${hh.dist} km · ${hh.cond}</div>
-        </div>
-        <div style="margin-left:auto;flex-shrink:0;">
-          <span class="risk-pill ${hh.risk==='High'?'risk-h':hh.risk==='Medium'?'risk-m':'risk-l'}" style="font-size:10px;padding:2px 7px;">${hh.risk}</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+ document.getElementById('mc-list-count').textContent=filtered.length+' Household'+(filtered.length!==1?'s':'');
+ document.getElementById('mc-hh-list').innerHTML=filtered.map(hh=>{
+   const color=hh.risk==='High'?'#F87171':hh.risk==='Medium'?'#FCD34D':'#6EE7B7';
+   const safeId='mc-li-'+hh.id.replace(/-/g,'');
+   return `<div class="mc-hh-item hh-item" id="${safeId}" onclick='selectMCHousehold(${JSON.stringify(hh)})'>
+     <div style="display:flex;align-items:center;gap:10px;">
+       <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;box-shadow:0 0 6px ${color};"></div>
+       <div style="min-width:0;">
+         <div style="font-size:12px;font-weight:700;color:${color};font-family:monospace;">${hh.id}</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${hh.name} · ${hh.sub}</div>
+         <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:1px;">${hh.dist} km · ${hh.cond}</div>
+       </div>
+       <div style="margin-left:auto;flex-shrink:0;">
+         <span class="risk-pill ${hh.risk==='High'?'risk-h':hh.risk==='Medium'?'risk-m':'risk-l'}" style="font-size:10px;padding:2px 7px;">${hh.risk}</span>
+       </div>
+     </div>
+   </div>`;
+ }).join('');
 }
-
-/* ── OLD selectHousehold / showHHTooltip stubs (kept for any residual refs) ── */
-function selectHousehold(){}
-function showHHTooltip(){}
-
-
-
+ 
 /* ── GEOSPATIAL MAPPER — LEAFLET ── */
-// Real Nakuru County facilities from MoH PDF
-const nakuruFacilities = [
-  {name:'Nakuru PGH (Provincial General Hospital)', lat:-0.2929, lng:36.0763, type:'hospital'},
-  {name:'Naivasha District Hospital', lat:-0.7145, lng:36.4335, type:'hospital'},
-  {name:'Bahati District Hospital', lat:-0.1703, lng:36.1237, type:'hospital'},
-  {name:'Molo District Hospital', lat:-0.2500, lng:35.7337, type:'hospital'},
-  {name:'Elburgon Sub-District Hospital', lat:-0.3059, lng:35.8097, type:'hospital'},
-  {name:'Gilgil Sub-District Hospital', lat:-0.4987, lng:36.3225, type:'hospital'},
-  {name:'Olenguruone Sub-District Hospital', lat:-0.6200, lng:35.6702, type:'hospital'},
-  {name:'Subukia SDH', lat:-0.0003, lng:36.2283, type:'hospital'},
-  {name:'Kabazi Sub-District Hospital', lat:-0.0764, lng:36.1679, type:'hospital'},
-  {name:'Mediheal Hospital Nakuru', lat:-0.2693, lng:36.1070, type:'hospital'},
-  {name:'Nakuru War Memorial Hospital', lat:-0.2887, lng:36.0763, type:'hospital'},
-  {name:'Sunrise Evans Hospital', lat:-0.2933, lng:36.0591, type:'hospital'},
-  {name:'St Mary\'s Hospital Gilgil', lat:-0.4996, lng:36.3237, type:'hospital'},
-  {name:'Valley Hospital', lat:-0.2887, lng:36.0725, type:'hospital'},
-  {name:'Egerton University Hospital', lat:-0.3710, lng:35.9431, type:'hospital'},
-  {name:'Goldenlife Medical Centre Naivasha', lat:-0.7186, lng:36.4371, type:'hospital'},
-  {name:'Polyclinic Hospital Naivasha', lat:-0.7146, lng:36.4335, type:'hospital'},
-  {name:'Aga Khan University Clinic Naivasha', lat:-0.7146, lng:36.4335, type:'clinic'},
-  {name:'Nakuru Heart Centre', lat:-0.2874, lng:36.0697, type:'clinic'},
-  {name:'Meridian Medical Centre', lat:-0.2833, lng:36.0751, type:'clinic'},
-  {name:'Agakhan Medical Centre Nakuru', lat:-0.2865, lng:36.0635, type:'clinic'},
-  {name:'Avenue Health Care Nakuru', lat:-0.2906, lng:36.0813, type:'clinic'},
-  {name:'Nakuru Clinical Unit', lat:-0.2854, lng:36.0749, type:'clinic'},
-  {name:'Dr Manyara Clinic', lat:-0.2832, lng:36.0744, type:'clinic'},
-  {name:'Lanet Health Centre', lat:-0.2699, lng:36.1071, type:'clinic'},
-  {name:'Langa Langa Health Centre', lat:-0.3024, lng:36.0643, type:'clinic'},
-  {name:'Menengai Health Centre', lat:-0.2793, lng:36.0429, type:'clinic'},
-  {name:'Dundori Health Centre', lat:-0.2506, lng:36.2333, type:'clinic'},
-  {name:'Engashura Health Centre', lat:-0.2596, lng:36.1341, type:'clinic'},
-  {name:'Kabatini Health Centre', lat:-0.2362, lng:36.1671, type:'clinic'},
-  {name:'Kabarak Health Centre', lat:-0.2029, lng:35.9612, type:'clinic'},
-  {name:'Keringet Health Centre', lat:-0.4261, lng:35.6927, type:'clinic'},
-  {name:'Kimeswon Health Centre', lat:-0.3811, lng:35.5038, type:'clinic'},
-  {name:'Ikumbi Health Centre', lat:-0.3450, lng:35.6617, type:'clinic'},
-  {name:'Kiptagich Model Health Centre', lat:-0.5735, lng:35.6140, type:'clinic'},
-  {name:'Rongai Health Centre', lat:-0.2029, lng:35.9612, type:'clinic'},
-  {name:'Mau Narok Health Centre', lat:-0.6318, lng:35.6702, type:'clinic'},
-  {name:'Lare Health Centre', lat:-0.4400, lng:35.9748, type:'clinic'},
-  {name:'Njoro Health Centre', lat:-0.3355, lng:35.9394, type:'clinic'},
-  {name:'Mai Mahiu Health Centre', lat:-0.9773, lng:36.5839, type:'clinic'},
-  {name:'Holy Spirit Health Centre Gilgil', lat:-0.4996, lng:36.3253, type:'clinic'},
-  {name:'Olkaria Community Health Centre', lat:-0.8255, lng:36.2987, type:'clinic'},
-  {name:'Maiela Health Centre', lat:-0.8886, lng:36.1991, type:'clinic'},
-  {name:'Maji Tamu Health Centre', lat:-0.1685, lng:35.9655, type:'clinic'},
-  {name:'Sururu Health Centre', lat:-0.5464, lng:36.0567, type:'clinic'},
-  {name:'PCEA Upendo Health Centre', lat:-0.2913, lng:36.0623, type:'clinic'},
-  {name:'Upper Solai Health Centre', lat:0.0631, lng:36.1999, type:'clinic'},
-  {name:'Bahati Dispensary', lat:-0.1540, lng:36.1536, type:'dispensary'},
-  {name:'Barut Dispensary', lat:-0.1963, lng:36.0338, type:'dispensary'},
-  {name:'Bondeni Dispensary', lat:-0.2906, lng:36.0813, type:'dispensary'},
-  {name:'Mbaruk Dispensary', lat:-0.4996, lng:36.3237, type:'dispensary'},
-  {name:'Gilgil ASTU Dispensary', lat:-0.5008, lng:36.3256, type:'dispensary'},
-  {name:'Eburru Dispensary', lat:-0.5185, lng:36.0757, type:'dispensary'},
-  {name:'Longonot Dispensary', lat:-0.8831, lng:36.4917, type:'dispensary'},
-  {name:'Maraigushu Dispensary', lat:-0.7416, lng:36.5306, type:'dispensary'},
-  {name:'Karagita Dispensary', lat:-0.7767, lng:36.4313, type:'dispensary'},
-  {name:'Karati Dispensary', lat:-0.6903, lng:36.4789, type:'dispensary'},
-  {name:'Ndabibi Dispensary', lat:-0.7114, lng:36.2185, type:'dispensary'},
-  {name:'Moi Ndabi Dispensary', lat:-0.7401, lng:36.2535, type:'dispensary'},
-  {name:'Kipkonyo Dispensary', lat:-0.8194, lng:36.2038, type:'dispensary'},
-  {name:'Kasarani Dispensary', lat:-0.7115, lng:36.2954, type:'dispensary'},
-  {name:'Nyamathi Dispensary', lat:-0.6649, lng:36.4193, type:'dispensary'},
-  {name:'Kijani Mirera Dispensary', lat:-0.8368, lng:36.3553, type:'dispensary'},
-  {name:'Gichobo Dispensary', lat:-0.4565, lng:35.9820, type:'dispensary'},
-  {name:'Teret Dispensary', lat:-0.5179, lng:35.9622, type:'dispensary'},
-  {name:'Mauche Dispensary', lat:-0.5141, lng:35.9744, type:'dispensary'},
-  {name:'Kimugul Dispensary', lat:-0.4400, lng:35.9748, type:'dispensary'},
-  {name:'Bagaria Dispensary', lat:-0.4854, lng:36.0400, type:'dispensary'},
-  {name:'Kianjoya Dispensary', lat:-0.5464, lng:36.0567, type:'dispensary'},
-  {name:'Likia Dispensary', lat:-0.5362, lng:35.9669, type:'dispensary'},
-  {name:'Neissuit Dispensary', lat:-0.3953, lng:35.8991, type:'dispensary'},
-  {name:'Mukorombosi Dispensary', lat:-0.3190, lng:35.7534, type:'dispensary'},
-  {name:'Nyakiambi Dispensary', lat:-0.3012, lng:35.8517, type:'dispensary'},
-  {name:'Marioshoni Dispensary', lat:-0.4121, lng:35.9022, type:'dispensary'},
-  {name:'Sachangwan Dispensary', lat:-0.2052, lng:35.7862, type:'dispensary'},
-  {name:'Subukia Dispensary', lat:0.0003, lng:36.2283, type:'dispensary'},
-  {name:'Munanda Dispensary', lat:-0.0299, lng:36.2047, type:'dispensary'},
-  {name:'Mbogoini Dispensary', lat:-0.1050, lng:36.1274, type:'dispensary'},
-  {name:'Tachasis Dispensary', lat:-0.0448, lng:36.2168, type:'dispensary'},
-  {name:'Simboiyon Dispensary', lat:0.0797, lng:36.2440, type:'dispensary'},
-  {name:'Igwamiti Dispensary', lat:0.1404, lng:36.2451, type:'dispensary'},
-  {name:'Kamara Dispensary', lat:-0.0965, lng:35.6793, type:'dispensary'},
-  {name:'Kuresoi Health Centre', lat:-0.3811, lng:35.5038, type:'dispensary'},
-  {name:'Tendwet Dispensary', lat:-0.5041, lng:35.6973, type:'dispensary'},
-  {name:'Sasimua Dispensary', lat:-0.3579, lng:35.5547, type:'dispensary'},
-  {name:'Mungetho Dispensary', lat:-0.3811, lng:35.5038, type:'dispensary'},
-  {name:'Silibwet Dispensary', lat:-0.4465, lng:35.6375, type:'dispensary'},
-  {name:'Tulwet Dispensary', lat:-0.3450, lng:35.6617, type:'dispensary'},
-  {name:'Kiwamu Dispensary', lat:-0.2163, lng:36.1218, type:'dispensary'},
-  {name:'Ruguru Dispensary', lat:-0.2555, lng:36.1341, type:'dispensary'},
-  {name:'Ndege Dispensary', lat:-0.3055, lng:36.1474, type:'dispensary'},
-  {name:'Nyonjoro Maternity Home', lat:-0.2783, lng:36.1218, type:'dispensary'},
-  {name:'Engendaptich Dispensary', lat:0.3075, lng:36.6557, type:'dispensary'},
-  {name:'Ol-Rongai Dispensary', lat:-0.1687, lng:35.9655, type:'dispensary'},
-  {name:'Sumek Dispensary', lat:-0.1184, lng:35.8589, type:'dispensary'},
-  {name:'Lelechwet Dispensary', lat:-0.2210, lng:35.8278, type:'dispensary'},
-  {name:'Lengenet Dispensary', lat:-0.1235, lng:35.8249, type:'dispensary'},
-  {name:'Kipsetek Dispensary', lat:-0.0835, lng:35.8737, type:'dispensary'},
-  {name:'Ogilgei Dispensary', lat:-0.0353, lng:35.9443, type:'dispensary'},
-  {name:'Kandutura Dispensary', lat:-0.1638, lng:35.9654, type:'dispensary'},
-  {name:'Lower Solai Dispensary', lat:-0.1688, lng:35.9652, type:'dispensary'},
-  {name:'Muricho Dispensary', lat:-0.2210, lng:35.8278, type:'dispensary'},
-  {name:'Ngendaptich Dispensary', lat:0.3075, lng:36.6557, type:'dispensary'},
-  {name:'Elburgon PCEA Dispensary', lat:-0.3059, lng:35.8097, type:'dispensary'},
-  {name:'Turi Dispensary', lat:-0.2860, lng:35.7581, type:'dispensary'},
-  {name:'Arimi Dispensary', lat:-0.2825, lng:35.8513, type:'dispensary'},
-  {name:'FGC of Kenya Molo', lat:-0.2497, lng:35.7343, type:'dispensary'},
-];
-
-const syntheticHouseholds = [
-  {id:'HH-NK-00234', lat:-0.1540, lng:36.1400, name:'Rutendo Nyamari', age:34, cond:'Hypertension', risk:'High', dist:41.2, ins:'None', sub:'Bahati'},
-  {id:'HH-NK-00891', lat:-0.3680, lng:35.9700, name:'Joseph Mwangi', age:52, cond:'Diabetes T2', risk:'High', dist:28.5, ins:'None', sub:'Njoro'},
-  {id:'HH-NK-01102', lat:-0.1900, lng:35.9800, name:'Aisha Karimi', age:29, cond:'Maternal Care', risk:'Medium', dist:19.3, ins:'NHIF', sub:'Rongai'},
-  {id:'HH-NK-00455', lat:0.0200, lng:36.2200, name:'Samuel Otieno', age:45, cond:'TB Follow-up', risk:'Medium', dist:36.7, ins:'None', sub:'Subukia'},
-  {id:'HH-NK-00678', lat:-0.3030, lng:36.0750, name:'Fatuma Hassan', age:38, cond:'HIV Care', risk:'Low', dist:3.1, ins:'Partial', sub:'Nakuru Town'},
-  {id:'HH-NK-00312', lat:-0.2700, lng:35.7600, name:'Grace Wambui', age:61, cond:'Hypertension', risk:'High', dist:52.3, ins:'None', sub:'Molo'},
-  {id:'HH-NK-00549', lat:-0.4800, lng:36.3000, name:'Daniel Kimani', age:44, cond:'Diabetes T2', risk:'Medium', dist:22.1, ins:'NHIF', sub:'Gilgil'},
-  {id:'HH-NK-00763', lat:-0.1850, lng:36.1300, name:'Susan Njoki', age:33, cond:'Maternal Care', risk:'Low', dist:7.8, ins:'NHIF', sub:'Bahati'},
-  {id:'HH-NK-00988', lat:-0.4200, lng:35.6900, name:'Peter Koech', age:58, cond:'TB Screening', risk:'High', dist:47.0, ins:'None', sub:'Kuresoi'},
-  {id:'HH-NK-01055', lat:-0.1500, lng:36.0200, name:'Mary Auma', age:27, cond:'Child Nutrition', risk:'Low', dist:11.2, ins:'NHIF', sub:'Rongai'},
-  {id:'HH-NK-01201', lat:-0.4200, lng:35.9900, name:'Charles Njoroge', age:49, cond:'Mental Health', risk:'Medium', dist:31.4, ins:'None', sub:'Njoro'},
-  {id:'HH-NK-01348', lat:0.0700, lng:36.1500, name:'Alice Chebet', age:36, cond:'Hypertension', risk:'High', dist:39.8, ins:'None', sub:'Subukia'},
-  {id:'HH-NK-01420', lat:-0.7200, lng:36.4400, name:'Hassan Mwangi', age:41, cond:'HIV Care', risk:'Medium', dist:18.5, ins:'Partial', sub:'Naivasha'},
-  {id:'HH-NK-01502', lat:-0.9800, lng:36.5800, name:'Joyce Kamau', age:55, cond:'Maternal Anemia', risk:'High', dist:61.0, ins:'None', sub:'Naivasha'},
-  {id:'HH-NK-01630', lat:-0.6400, lng:35.9900, name:'Eric Mutua', age:31, cond:'TB Follow-up', risk:'High', dist:44.5, ins:'None', sub:'Molo'},
-  {id:'HH-NK-01744', lat:-0.0800, lng:35.7500, name:'Janet Wanyama', age:48, cond:'Diabetes T2', risk:'Medium', dist:25.8, ins:'NHIF', sub:'Kuresoi'},
-  {id:'HH-NK-01815', lat:-0.3100, lng:36.0600, name:'Michael Odhiambo', age:23, cond:'HIV Care', risk:'Low', dist:5.5, ins:'NHIF', sub:'Nakuru Town'},
-  {id:'HH-NK-01900', lat:-0.1000, lng:36.2500, name:'Esther Waweru', age:67, cond:'Hypertension', risk:'High', dist:38.9, ins:'None', sub:'Subukia'},
-  {id:'HH-NK-02010', lat:-0.5000, lng:36.0100, name:'Philip Kariuki', age:39, cond:'Child Nutrition', risk:'Medium', dist:28.1, ins:'NHIF', sub:'Njoro'},
-  {id:'HH-NK-02155', lat:-0.2200, lng:35.8500, name:'Catherine Mutai', age:52, cond:'TB Screening', risk:'High', dist:49.2, ins:'None', sub:'Rongai'},
-];
-
 let nakuruMap = null;
 let mapLayers = { facilities: null, households: null, risk: null };
 let decayModeLeaflet = false;
 let decayCircle = null;
-
+ 
 function initNakuruMap() {
-  if(nakuruMap) return;
-  nakuruMap = L.map('nakuru-map', {
-    center: [-0.310, 36.080],
-    zoom: 9,
-    zoomControl: true
+ if(nakuruMap) return;
+ nakuruMap = L.map('nakuru-map', { center: [-0.310, 36.080], zoom: 9, zoomControl: true });
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 18 }).addTo(nakuruMap);
+ 
+ const facMarkers = [];
+ nakuruFacilities.forEach(f => {
+   const color = f.type === 'hospital' ? '#1D9E75' : f.type === 'clinic' ? '#185FA5' : '#8B5CF6';
+   const size = f.type === 'hospital' ? 10 : f.type === 'clinic' ? 8 : 6;
+   const icon = L.divIcon({
+     className: '',
+     html: `<div style="width:${size}px;height:${size}px;background:${color};border-radius:${f.type==='dispensary'?'50%':'3px'};border:2px solid rgba(255,255,255,0.7);box-shadow:0 0 6px ${color}80;"></div>`,
+     iconAnchor: [size/2, size/2]
+   });
+   const m = L.marker([f.lat, f.lng], {icon}).bindPopup(`<b>${f.name}</b><br><span style="color:#aaa;font-size:12px;">${f.type.charAt(0).toUpperCase()+f.type.slice(1)} · Nakuru County</span>`);
+   facMarkers.push(m);
   });
-
-  // Dark tile layer for aesthetic match
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors © CARTO',
-    maxZoom: 18
-  }).addTo(nakuruMap);
-
-  // Build facility layer group
-  const facMarkers = [];
-  nakuruFacilities.forEach(f => {
-    const color = f.type === 'hospital' ? '#1D9E75' : f.type === 'clinic' ? '#185FA5' : '#8B5CF6';
-    const size = f.type === 'hospital' ? 10 : f.type === 'clinic' ? 8 : 6;
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:${size}px;height:${size}px;background:${color};border-radius:${f.type==='dispensary'?'50%':'3px'};border:2px solid rgba(255,255,255,0.7);box-shadow:0 0 6px ${color}80;"></div>`,
-      iconAnchor: [size/2, size/2]
-    });
-    const m = L.marker([f.lat, f.lng], {icon})
-      .bindPopup(`<b>${f.name}</b><br><span style="color:#aaa;font-size:12px;">${f.type.charAt(0).toUpperCase()+f.type.slice(1)} · Nakuru County</span>`);
-    facMarkers.push(m);
+ mapLayers.facilities = L.layerGroup(facMarkers).addTo(nakuruMap);
+ document.getElementById('geo-fac-count').textContent = nakuruFacilities.length;
+ 
+ const hhMarkers = [];
+ syntheticHouseholds.forEach(hh => {
+   const color = hh.risk === 'High' ? '#F87171' : hh.risk === 'Medium' ? '#FCD34D' : '#6EE7B7';
+   const icon = L.divIcon({
+     className: '',
+     html: `<div style="width:12px;height:12px;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px ${color};cursor:pointer;"></div>`,
+     iconAnchor: [6, 6]
+   });
+   const m = L.marker([hh.lat, hh.lng], {icon}).bindPopup(`<b>${hh.id}</b><br>${hh.name} · ${hh.age} yrs<br>${hh.cond}<br><span style="color:${color};font-weight:700;">${hh.risk} Risk</span> · ${hh.dist} km to nearest facility<br>Insurance: ${hh.ins} · ${hh.sub} Sub-county`);
+   hhMarkers.push(m);
   });
-  mapLayers.facilities = L.layerGroup(facMarkers).addTo(nakuruMap);
-  document.getElementById('geo-fac-count').textContent = nakuruFacilities.length;
-
-  // Build household layer group (hidden by default)
-  const hhMarkers = [];
-  syntheticHouseholds.forEach(hh => {
-    const color = hh.risk === 'High' ? '#F87171' : hh.risk === 'Medium' ? '#FCD34D' : '#6EE7B7';
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:12px;height:12px;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px ${color};cursor:pointer;"></div>`,
-      iconAnchor: [6, 6]
-    });
-    const m = L.marker([hh.lat, hh.lng], {icon})
-      .bindPopup(`<b>${hh.id}</b><br>${hh.name} · ${hh.age} yrs<br>${hh.cond}<br><span style="color:${color};font-weight:700;">${hh.risk} Risk</span> · ${hh.dist} km to nearest facility<br>Insurance: ${hh.ins} · ${hh.sub} Sub-county`);
-    hhMarkers.push(m);
-  });
-  mapLayers.households = L.layerGroup(hhMarkers); // not added by default
-
-  // Risk zone circles
-  const riskZones = [
-    {lat:-0.17, lng:36.12, r:8000, color:'#E24B4A', label:'Bahati High-Risk Zone'},
-    {lat:-0.42, lng:35.70, r:12000, color:'#E24B4A', label:'Kuresoi High-Risk Zone'},
-    {lat:-0.63, lng:35.99, r:9000, color:'#E24B4A', label:'Molo-Narok Risk Zone'},
-    {lat:0.04, lng:36.22, r:7000, color:'#F59E0B', label:'Subukia Medium Zone'},
-    {lat:-0.20, lng:35.85, r:6000, color:'#F59E0B', label:'Rongai Medium Zone'},
-    {lat:-0.50, lng:36.33, r:5000, color:'#10B981', label:'Gilgil Low-Risk Zone'},
-    {lat:-0.29, lng:36.07, r:4000, color:'#10B981', label:'Nakuru Town Low-Risk Zone'},
+ mapLayers.households = L.layerGroup(hhMarkers);
+ 
+ const riskZones = [
+   {lat:-0.17, lng:36.12, r:8000, color:'#E24B4A', label:'Bahati High-Risk Zone'},
+   {lat:-0.42, lng:35.70, r:12000, color:'#E24B4A', label:'Kuresoi High-Risk Zone'},
+   {lat:-0.63, lng:35.99, r:9000, color:'#E24B4A', label:'Molo-Narok Risk Zone'},
+   {lat:0.04, lng:36.22, r:7000, color:'#F59E0B', label:'Subukia Medium Zone'},
+   {lat:-0.20, lng:35.85, r:6000, color:'#F59E0B', label:'Rongai Medium Zone'},
+   {lat:-0.50, lng:36.33, r:5000, color:'#10B981', label:'Gilgil Low-Risk Zone'},
+   {lat:-0.29, lng:36.07, r:4000, color:'#10B981', label:'Nakuru Town Low-Risk Zone'},
   ];
-  const riskMarkers = riskZones.map(z => L.circle([z.lat, z.lng], {
-    color: z.color, fillColor: z.color, fillOpacity: 0.15, weight: 1.5, opacity: 0.6, radius: z.r
-  }).bindTooltip(z.label, {permanent:false, direction:'top'}));
-  mapLayers.risk = L.layerGroup(riskMarkers).addTo(nakuruMap);
-
-  // Click handler for decay analysis
-  nakuruMap.on('click', function(e) {
-    if(!decayModeLeaflet) return;
-    const pinLat = e.latlng.lat, pinLng = e.latlng.lng;
-    if(decayCircle) nakuruMap.removeLayer(decayCircle);
-    decayCircle = L.circle([pinLat, pinLng], {
-      radius: 35000, color: '#F59E0B', fillColor: '#F59E0B',
-      fillOpacity: 0.06, weight: 2, dashArray: '8 6'
-    }).addTo(nakuruMap).bindTooltip('35km decay threshold', {permanent:true, direction:'top'});
-    const results = syntheticHouseholds.map(hh => {
-      const dist = nakuruMap.distance([pinLat, pinLng], [hh.lat, hh.lng]) / 1000;
-      const score = Math.max(0, 1 - Math.pow(dist / 35, 1.5)).toFixed(2);
-      return {id: hh.id, dist: dist.toFixed(1), score};
-    }).sort((a,b) => b.score - a.score);
-    const panel = document.getElementById('decay-result-panel');
-    const content = document.getElementById('decay-results-content');
-    panel.style.display = 'block';
-    content.innerHTML = results.map(r => {
-      const sc = parseFloat(r.score);
-      const cls = sc >= 0.6 ? 'score-low' : sc >= 0.3 ? 'score-med' : 'score-high';
-      const label = sc >= 0.6 ? 'Good access' : sc >= 0.3 ? 'Moderate' : 'Poor access';
-      return `<div class="decay-result-row"><span class="decay-hh-id">${r.id}</span><span class="decay-dist">${r.dist} km</span><span class="decay-score ${cls}">${label} (${r.score})</span></div>`;
-    }).join('');
-    document.getElementById('geo-map-hint').textContent = '📌 Pin dropped · ' + results.length + ' households analysed — scroll down for results';
-    decayModeLeaflet = false;
+ const riskMarkers = riskZones.map(z => L.circle([z.lat, z.lng], {
+   color: z.color, fillColor: z.color, fillOpacity: 0.15, weight: 1.5, opacity: 0.6, radius: z.r
+ }).bindTooltip(z.label, {permanent:false, direction:'top'}));
+ mapLayers.risk = L.layerGroup(riskMarkers).addTo(nakuruMap);
+ 
+ nakuruMap.on('click', function(e) {
+   if(!decayModeLeaflet) return;
+   const pinLat = e.latlng.lat, pinLng = e.latlng.lng;
+   if(decayCircle) nakuruMap.removeLayer(decayCircle);
+   decayCircle = L.circle([pinLat, pinLng], {
+     radius: 35000, color: '#F59E0B', fillColor: '#F59E0B', fillOpacity: 0.06, weight: 2, dashArray: '8 6'
+   }).addTo(nakuruMap).bindTooltip('35km decay threshold', {permanent:true, direction:'top'});
+   const results = syntheticHouseholds.map(hh => {
+     const dist = nakuruMap.distance([pinLat, pinLng], [hh.lat, hh.lng]) / 1000;
+     const score = Math.max(0, 1 - Math.pow(dist / 35, 1.5)).toFixed(2);
+     return {id: hh.id, dist: dist.toFixed(1), score};
+   }).sort((a,b) => b.score - a.score);
+   const panel = document.getElementById('decay-result-panel');
+   const content = document.getElementById('decay-results-content');
+   panel.style.display = 'block';
+   content.innerHTML = results.map(r => {
+     const sc = parseFloat(r.score);
+     const cls = sc >= 0.6 ? 'score-low' : sc >= 0.3 ? 'score-med' : 'score-high';
+     const label = sc >= 0.6 ? 'Good access' : sc >= 0.3 ? 'Moderate' : 'Poor access';
+     return `<div class="decay-result-row"><span class="decay-hh-id">${r.id}</span><span class="decay-dist">${r.dist} km</span><span class="decay-score ${cls}">${label} (${r.score})</span></div>`;
+   }).join('');
+   document.getElementById('geo-map-hint').textContent = '📌 Pin dropped · ' + results.length + ' households analysed — scroll down for results';
+   decayModeLeaflet = false;
   });
 }
-
+ 
 function toggleLayer(layer, el) {
-  el.classList.toggle('active-ctrl');
-  const on = el.classList.contains('active-ctrl');
-  if(!nakuruMap) return;
-  if(layer === 'facilities') { if(on) mapLayers.facilities.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.facilities); }
-  if(layer === 'households') { if(on) mapLayers.households.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.households); }
-  if(layer === 'risk') { if(on) mapLayers.risk.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.risk); }
+ el.classList.toggle('active-ctrl');
+ const on = el.classList.contains('active-ctrl');
+ if(!nakuruMap) return;
+ if(layer === 'facilities') { if(on) mapLayers.facilities.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.facilities); }
+ if(layer === 'households') { if(on) mapLayers.households.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.households); }
+ if(layer === 'risk') { if(on) mapLayers.risk.addTo(nakuruMap); else nakuruMap.removeLayer(mapLayers.risk); }
 }
-
+ 
 function activateDecayMode() {
-  if(!nakuruMap) return;
-  decayModeLeaflet = true;
-  document.getElementById('geo-map-hint').textContent = '📌 Click anywhere on the map to drop a pin and analyse household access within 35km';
-  document.getElementById('ctrl-decay').classList.add('active-ctrl');
+ if(!nakuruMap) return;
+ decayModeLeaflet = true;
+ document.getElementById('geo-map-hint').textContent = '📌 Click anywhere on the map to drop a pin and analyse household access within 35km';
+ document.getElementById('ctrl-decay').classList.add('active-ctrl');
 }
-
+ 
 /* ── PATIENT DATABASE ── */
-let allPatients = [
-  {id:'HH-NK-00234',name:'Rutendo Nyamari',age:34,gender:'F',sub:'Bahati',cond:'Hypertension',risk:'High',dist:41.2,ins:'None',lastVisit:'12 Mar 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-00891',name:'Joseph Mwangi',age:52,gender:'M',sub:'Njoro',cond:'Diabetes T2',risk:'High',dist:28.5,ins:'None',lastVisit:'15 Feb 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-01102',name:'Aisha Karimi',age:29,gender:'F',sub:'Rongai',cond:'Maternal Care',risk:'Medium',dist:19.3,ins:'NHIF',lastVisit:'20 Mar 2026',sw:'James Kipkemboi'},
-  {id:'HH-NK-00455',name:'Samuel Otieno',age:45,gender:'M',sub:'Subukia',cond:'TB Follow-up',risk:'Medium',dist:36.7,ins:'None',lastVisit:'01 Mar 2026',sw:'Faith Wanjiku'},
-  {id:'HH-NK-00678',name:'Fatuma Hassan',age:38,gender:'F',sub:'Nakuru Town',cond:'HIV Care',risk:'Low',dist:3.1,ins:'Partial',lastVisit:'15 Mar 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-00312',name:'Grace Wambui',age:61,gender:'F',sub:'Molo',cond:'Hypertension',risk:'High',dist:52.3,ins:'None',lastVisit:'22 Jan 2026',sw:'David Muriithi'},
-  {id:'HH-NK-00549',name:'Daniel Kimani',age:44,gender:'M',sub:'Gilgil',cond:'Diabetes T2',risk:'Medium',dist:22.1,ins:'NHIF',lastVisit:'10 Mar 2026',sw:'Joyce Mutua'},
-  {id:'HH-NK-00763',name:'Susan Njoki',age:33,gender:'F',sub:'Bahati',cond:'Maternal Care',risk:'Low',dist:7.8,ins:'NHIF',lastVisit:'02 Apr 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-00988',name:'Peter Koech',age:58,gender:'M',sub:'Kuresoi',cond:'TB Screening',risk:'High',dist:47.0,ins:'None',lastVisit:'14 Jan 2026',sw:'David Muriithi'},
-  {id:'HH-NK-01055',name:'Mary Auma',age:27,gender:'F',sub:'Rongai',cond:'Child Nutrition',risk:'Low',dist:11.2,ins:'NHIF',lastVisit:'28 Mar 2026',sw:'James Kipkemboi'},
-  {id:'HH-NK-01201',name:'Charles Njoroge',age:49,gender:'M',sub:'Njoro',cond:'Mental Health',risk:'Medium',dist:31.4,ins:'None',lastVisit:'05 Feb 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-01348',name:'Alice Chebet',age:36,gender:'F',sub:'Subukia',cond:'Hypertension',risk:'High',dist:39.8,ins:'None',lastVisit:'20 Feb 2026',sw:'Faith Wanjiku'},
-  {id:'HH-NK-01420',name:'Hassan Mwangi',age:41,gender:'M',sub:'Naivasha',cond:'HIV Care',risk:'Medium',dist:18.5,ins:'Partial',lastVisit:'19 Mar 2026',sw:'Rose Kimani'},
-  {id:'HH-NK-01502',name:'Joyce Kamau',age:55,gender:'F',sub:'Naivasha',cond:'Maternal Anemia',risk:'High',dist:61.0,ins:'None',lastVisit:'10 Jan 2026',sw:'Rose Kimani'},
-  {id:'HH-NK-01630',name:'Eric Mutua',age:31,gender:'M',sub:'Molo',cond:'TB Follow-up',risk:'High',dist:44.5,ins:'None',lastVisit:'18 Feb 2026',sw:'David Muriithi'},
-  {id:'HH-NK-01744',name:'Janet Wanyama',age:48,gender:'F',sub:'Kuresoi',cond:'Diabetes T2',risk:'Medium',dist:25.8,ins:'NHIF',lastVisit:'12 Mar 2026',sw:'David Muriithi'},
-  {id:'HH-NK-01815',name:'Michael Odhiambo',age:23,gender:'M',sub:'Nakuru Town',cond:'HIV Care',risk:'Low',dist:5.5,ins:'NHIF',lastVisit:'01 Apr 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-01900',name:'Esther Waweru',age:67,gender:'F',sub:'Subukia',cond:'Hypertension',risk:'High',dist:38.9,ins:'None',lastVisit:'25 Jan 2026',sw:'Faith Wanjiku'},
-  {id:'HH-NK-02010',name:'Philip Kariuki',age:39,gender:'M',sub:'Njoro',cond:'Child Nutrition',risk:'Medium',dist:28.1,ins:'NHIF',lastVisit:'31 Mar 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-02155',name:'Catherine Mutai',age:52,gender:'F',sub:'Rongai',cond:'TB Screening',risk:'High',dist:49.2,ins:'None',lastVisit:'08 Feb 2026',sw:'James Kipkemboi'},
-  {id:'HH-NK-02231',name:'Wilson Otieno',age:29,gender:'M',sub:'Nakuru Town',cond:'Mental Health',risk:'Low',dist:4.2,ins:'NHIF',lastVisit:'04 Apr 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-02340',name:'Priscilla Njoroge',age:44,gender:'F',sub:'Gilgil',cond:'Hypertension',risk:'Medium',dist:15.6,ins:'None',lastVisit:'22 Mar 2026',sw:'Joyce Mutua'},
-  {id:'HH-NK-02410',name:'Bernard Kamau',age:63,gender:'M',sub:'Bahati',cond:'TB Follow-up',risk:'High',dist:33.2,ins:'None',lastVisit:'14 Feb 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-02512',name:'Lilian Omondi',age:26,gender:'F',sub:'Naivasha',cond:'Maternal Care',risk:'Low',dist:9.8,ins:'NHIF',lastVisit:'03 Apr 2026',sw:'Rose Kimani'},
-  {id:'HH-NK-02623',name:'Francis Kiprotich',age:57,gender:'M',sub:'Kuresoi',cond:'Hypertension',risk:'High',dist:55.4,ins:'None',lastVisit:'02 Jan 2026',sw:'David Muriithi'},
-  {id:'HH-NK-02710',name:'Mercy Njeri',age:34,gender:'F',sub:'Molo',cond:'HIV Care',risk:'Medium',dist:21.3,ins:'Partial',lastVisit:'18 Mar 2026',sw:'David Muriithi'},
-  {id:'HH-NK-02801',name:'Stanley Wachira',age:48,gender:'M',sub:'Subukia',cond:'Diabetes T2',risk:'Medium',dist:27.6,ins:'NHIF',lastVisit:'27 Feb 2026',sw:'Faith Wanjiku'},
-  {id:'HH-NK-02900',name:'Agnes Cherop',age:72,gender:'F',sub:'Rongai',cond:'Hypertension',risk:'High',dist:42.7,ins:'None',lastVisit:'05 Jan 2026',sw:'James Kipkemboi'},
-  {id:'HH-NK-03010',name:'Collins Mugo',age:19,gender:'M',sub:'Nakuru Town',cond:'HIV Screening',risk:'Low',dist:2.8,ins:'None',lastVisit:'05 Apr 2026',sw:'Amara Ochieng'},
-  {id:'HH-NK-03120',name:'Veronica Akinyi',age:41,gender:'F',sub:'Gilgil',cond:'Child Nutrition',risk:'Medium',dist:16.9,ins:'NHIF',lastVisit:'29 Mar 2026',sw:'Joyce Mutua'},
-];
-
-let dbFiltered = [];
-let dbCurrentPage = 1;
-const dbPageSize = 10;
-let dbSortKey = '';
-let dbSortDir = 1;
-
+let allPatients = [];
 let dbFiltered = [];
 let dbCurrentPage = 1;
 const dbPageSize = 10;
@@ -1554,9 +1430,7 @@ let dbSortDir = 1;
 
 /* ── PRELOADED HUB STATS / API FETCH ── */
 async function loadHubStats() {
-  // Use pre-loaded data if available (Streamlit injection)
   const s = window.PRELOADED_STATS || await apiGet('/analytics/dashboard/stats');
-  
   if (s) {
     document.getElementById('hub-high-risk').textContent = s.high_risk_count || "0";
     document.getElementById('hub-health-evasive').textContent = s.evasive_profiles || "0";
@@ -1586,6 +1460,15 @@ async function loadPatientsFromAPI() {
     initDB();
   } catch (err) {
     console.error('API error:', err);
+    // Fallback if API fails
+    allPatients = [
+     {id:'HH-NK-00234',name:'Rutendo Nyamari',age:34,gender:'F',sub:'Bahati',cond:'Hypertension',risk:'High',dist:41.2,ins:'None',lastVisit:'12 Mar 2026',sw:'Amara Ochieng'},
+     {id:'HH-NK-00891',name:'Joseph Mwangi',age:52,gender:'M',sub:'Njoro',cond:'Diabetes T2',risk:'High',dist:28.5,ins:'None',lastVisit:'15 Feb 2026',sw:'Amara Ochieng'},
+     {id:'HH-NK-01102',name:'Aisha Karimi',age:29,gender:'F',sub:'Rongai',cond:'Maternal Care',risk:'Medium',dist:19.3,ins:'NHIF',lastVisit:'20 Mar 2026',sw:'James Kipkemboi'},
+     {id:'HH-NK-00455',name:'Samuel Otieno',age:45,gender:'M',sub:'Subukia',cond:'TB Follow-up',risk:'Medium',dist:36.7,ins:'None',lastVisit:'01 Mar 2026',sw:'Faith Wanjiku'}
+    ];
+    dbFiltered = [...allPatients];
+    initDB();
   }
 }
 
@@ -1596,7 +1479,6 @@ async function loadPatients() {
     initDB();
     return;
   }
-  // Fallback to fetch logic
   await loadPatientsFromAPI();
 }
  
@@ -1605,8 +1487,7 @@ function initDB() {
  const med = allPatients.filter(p => p.risk === 'Medium').length;
  const low = allPatients.filter(p => p.risk === 'Low').length;
  const nhif = allPatients.filter(p => p.ins === 'NHIF').length;
- document.getElementById('db-total-stat').textContent =
-allPatients.length;
+ document.getElementById('db-total-stat').textContent = allPatients.length;
  document.getElementById('db-high-stat').textContent = high;
  document.getElementById('db-med-stat').textContent = med;
  document.getElementById('db-low-stat').textContent = low;
@@ -1620,9 +1501,7 @@ function filterDB() {
  const risk = document.getElementById('db-filter-risk').value;
  const sub = document.getElementById('db-filter-sub').value;
  dbFiltered = allPatients.filter(p => {
-   const matchQ = !q || p.id.toLowerCase().includes(q) ||
-p.name.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q) ||
-p.cond.toLowerCase().includes(q);
+   const matchQ = !q || p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.sub.toLowerCase().includes(q) || p.cond.toLowerCase().includes(q);
    const matchR = !risk || p.risk === risk;
    const matchS = !sub || p.sub === sub;
    return matchQ && matchR && matchS;
@@ -1675,21 +1554,20 @@ function renderDBTable() {
  
 function exportDB() {
  const headers = ['ID','Name','Age','Gender','Sub-county','Condition','Risk','Distance(km)','Insurance','Last Visit','Social Worker'];
- const csv = [headers.join(','), ...dbFiltered.map(p =>
-[p.id,`"${p.name}"`,p.age,p.gender,p.sub,`"${p.cond}"`,p.risk,p.dist,p.ins,p.lastVisit,`"${p.sw}"`].join(','))].join('\n');
+ const csv = [headers.join(','), ...dbFiltered.map(p => [p.id,`"${p.name}"`,p.age,p.gender,p.sub,`"${p.cond}"`,p.risk,p.dist,p.ins,p.lastVisit,`"${p.sw}"`].join(','))].join('\\n');
  const blob = new Blob([csv], {type:'text/csv'});
  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Nakuru_Patients.csv'; a.click();
 }
  
 /* ── CALL CONTACT ── */
 function callContact(phone) {
- alert('📞 Initiating call to ' + phone + '\n\nIn a live deployment this would dial via your registered telephony system.');
+ alert('📞 Initiating call to ' + phone + '\\n\\nIn a live deployment this would dial via your registered telephony system.');
 }
  
 /* ── SETTINGS ── */
 function updateDecayThreshold(val) {}
  
-/* ── API MOCK (Added for loadHubStats) ── */
+/* ── API MOCK ── */
 async function apiGet(endpoint) {
     if (endpoint === '/analytics/dashboard/stats') {
         return new Promise(resolve => setTimeout(() => resolve({
@@ -1711,8 +1589,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-""" 
-# ^^^ End the triple quotes here!
+"""
 
-# 3. Tell Streamlit to render the HTML string
 components.html(html_source_code, height=900, scrolling=True)
