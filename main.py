@@ -1,143 +1,84 @@
-import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
-import joblib
-import pandas as pd
-import re
-import nltk
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
-
-# --- 1. DATABASE & ROUTER IMPORTS ---
 from routers import auth, patients, analytics
-from database import engine
+from database import engine, SessionLocal
 import models
+from passlib.context import CryptContext
 
-# Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-# --- 2. PROFESSIONAL LOGGING SETUP ---
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("HealthcareAPI")
+app = FastAPI(title="HealthLink Kenya API", version="1.0")
 
-# --- 3. UNIVERSAL NLP PREPROCESSING MODULE ---
-for package in ['tokenizers/punkt', 'corpora/wordnet', 'tokenizers/punkt_tab']:
-    try:
-        nltk.data.find(package)
-    except LookupError:
-        nltk.download(package.split('/')[-1], quiet=True)
+app.add_middleware(CORSMiddleware,
+    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-_lemmatizer = WordNetLemmatizer()
-_base_stopwords = {
-    'i', 'me', 'my', 'we', 'our', 'you', 'your', 'he', 'him', 'his', 'she', 'her', 
-    'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'this', 'that', 
-    'am', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 
-    'does', 'did', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 
-    'of', 'at', 'by', 'for', 'with', 'about', 'to', 'from', 'in', 'out', 'on'
-}
-_custom_stopwords = {'study', 'method', 'result', 'patient', 'group', 'clinical'}
-FINAL_STOPWORDS = _base_stopwords.union(_custom_stopwords)
-
-def clean_and_tokenize(text: str) -> str:
-    if not isinstance(text, str) or not text.strip():
-        return ""
-    text = text.lower()
-    text = re.sub(r'[^a-z\s]', ' ', text)
-    tokens = word_tokenize(text)
-    clean_tokens = [
-        _lemmatizer.lemmatize(token) for token in tokens
-        if token not in FINAL_STOPWORDS and len(token) > 2
-    ]
-    return " ".join(clean_tokens)
-
-# --- 4. INITIALIZE FASTAPI & MIDDLEWARE ---
-app = FastAPI(
-    title="HealthLink Kenya API & Analytics Engine",
-    version="2.0",
-    description="UN-Grade Microservice for Predictive Healthcare Analytics & NLP"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include existing routers
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(analytics.router)
 
-# --- 5. LOAD MACHINE LEARNING MODEL ---
-try:
-    model = joblib.load("xgboost_access_model.pkl")
-    logger.info("✅ XGBoost Prediction Model loaded successfully")
-except Exception as e:
-    model = None
-    logger.error(f"⚠️ Warning: Model not loaded. {e}")
-
-# --- 6. DATA CONTRACT ---
-class PatientData(BaseModel):
-    distance_km: float = Field(..., ge=0.0, description="Distance in km to facility")
-    age_group: str = Field(..., description="Age category")
-    gender: str = Field(..., description="Administrative gender")
-    wealth_index: str = Field(..., description="Socioeconomic quintile")
-    insurance_status: int = Field(..., ge=0, le=1, description="0 = Uninsured, 1 = Insured")
-    residential_area_group: str = Field(..., description="Urban or Rural residence")
-    survey_weight: float = Field(default=1.0, description="Sampling weight")
-    clinical_notes: Optional[str] = Field(default="", description="Optional context")
-
-# --- 7. ENDPOINTS ---
-@app.get("/", tags=["System"])
-def read_root():
-    return {"status": "HealthLink API is live and running!"}
-
-@app.post("/predict_access", tags=["Analytics"])
-def predict_access(patient: PatientData):
-    if model is None:
-        raise HTTPException(status_code=500, detail="ML Model is unavailable.")
-
+@app.on_event("startup")
+def seed_on_startup():
+    db = SessionLocal()
     try:
-        processed_notes = clean_and_tokenize(patient.clinical_notes) if patient.clinical_notes else None
-        model_input = patient.model_dump(exclude={"clinical_notes"})
-        input_df = pd.DataFrame([model_input])
-        
-        raw_probability = float(model.predict_proba(input_df)[0][1])
-        multiplier = 1.0
-        
-        if patient.insurance_status == 0: multiplier *= 0.55 
-            
-        wealth_lower = patient.wealth_index.lower()
-        if any(w in wealth_lower for w in ["poor", "lowest", "low"]): multiplier *= 0.75
-        elif any(w in wealth_lower for w in ["rich", "highest", "high"]): multiplier *= 1.20
+        if db.query(models.Patient).count() > 0:
+            return
+        pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        users = [
+            models.User(name="Amara Ochieng", email="amara@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="Joyce Mutua", email="joyce@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="David Muriithi", email="david@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="Faith Wanjiku", email="faith@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="James Kipkemboi", email="james@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="Rose Kimani", email="rose@healthlink.ke",
+                hashed_password=pwd.hash("password123"), role="social_worker"),
+            models.User(name="Supervisor Admin", email="admin@healthlink.ke",
+                hashed_password=pwd.hash("admin123"), role="supervisor"),
+        ]
+        db.add_all(users)
+        db.commit()
 
-        age_str = patient.age_group.lower()
-        if any(a in age_str for a in ["50", "60", "70", "80", "90", "older", "+"]): multiplier *= 0.70
-        elif any(a in age_str for a in ["0-4", "under 5", "infant"]): multiplier *= 0.80
-
-        if patient.distance_km > 50: multiplier *= 0.40
-        elif patient.distance_km > 15: multiplier *= 0.80
-
-        final_probability = max(0.01, min(raw_probability * multiplier, 0.99))
-        final_prediction = 1 if final_probability >= 0.50 else 0
-
-        return {
-            "prediction": final_prediction,
-            "probability": round(final_probability * 100, 2),
-            "nlp_analysis": {
-                "original_notes_provided": bool(patient.clinical_notes),
-                "cleaned_keywords": processed_notes
-            },
-            "status": "success"
-        }
-
+        patients_list = [
+            models.Patient(id="HH-NK-00234",name="Rutendo Nyamari",age=34,gender="F",sub_county="Bahati",condition="Hypertension",risk="High",distance_km=41.2,insurance="None",assigned_worker_id=1),
+            models.Patient(id="HH-NK-00891",name="Joseph Mwangi",age=52,gender="M",sub_county="Njoro",condition="Diabetes T2",risk="High",distance_km=28.5,insurance="None",assigned_worker_id=1),
+            models.Patient(id="HH-NK-01102",name="Aisha Karimi",age=29,gender="F",sub_county="Rongai",condition="Maternal Care",risk="Medium",distance_km=19.3,insurance="NHIF",assigned_worker_id=5),
+            models.Patient(id="HH-NK-00455",name="Samuel Otieno",age=45,gender="M",sub_county="Subukia",condition="TB Follow-up",risk="Medium",distance_km=36.7,insurance="None",assigned_worker_id=4),
+            models.Patient(id="HH-NK-00678",name="Fatuma Hassan",age=38,gender="F",sub_county="Nakuru Town",condition="HIV Care",risk="Low",distance_km=3.1,insurance="Partial",assigned_worker_id=1),
+            models.Patient(id="HH-NK-00312",name="Grace Wambui",age=61,gender="F",sub_county="Molo",condition="Hypertension",risk="High",distance_km=52.3,insurance="None",assigned_worker_id=3),
+            models.Patient(id="HH-NK-00549",name="Daniel Kimani",age=44,gender="M",sub_county="Gilgil",condition="Diabetes T2",risk="Medium",distance_km=22.1,insurance="NHIF",assigned_worker_id=2),
+            models.Patient(id="HH-NK-00763",name="Susan Njoki",age=33,gender="F",sub_county="Bahati",condition="Maternal Care",risk="Low",distance_km=7.8,insurance="NHIF",assigned_worker_id=1),
+            models.Patient(id="HH-NK-00988",name="Peter Koech",age=58,gender="M",sub_county="Kuresoi",condition="TB Screening",risk="High",distance_km=47.0,insurance="None",assigned_worker_id=3),
+            models.Patient(id="HH-NK-01055",name="Mary Auma",age=27,gender="F",sub_county="Rongai",condition="Child Nutrition",risk="Low",distance_km=11.2,insurance="NHIF",assigned_worker_id=5),
+            models.Patient(id="HH-NK-01201",name="Charles Njoroge",age=49,gender="M",sub_county="Njoro",condition="Mental Health",risk="Medium",distance_km=31.4,insurance="None",assigned_worker_id=1),
+            models.Patient(id="HH-NK-01348",name="Alice Chebet",age=36,gender="F",sub_county="Subukia",condition="Hypertension",risk="High",distance_km=39.8,insurance="None",assigned_worker_id=4),
+            models.Patient(id="HH-NK-01420",name="Hassan Mwangi",age=41,gender="M",sub_county="Naivasha",condition="HIV Care",risk="Medium",distance_km=18.5,insurance="Partial",assigned_worker_id=6),
+            models.Patient(id="HH-NK-01502",name="Joyce Kamau",age=55,gender="F",sub_county="Naivasha",condition="Maternal Anemia",risk="High",distance_km=61.0,insurance="None",assigned_worker_id=6),
+            models.Patient(id="HH-NK-01630",name="Eric Mutua",age=31,gender="M",sub_county="Molo",condition="TB Follow-up",risk="High",distance_km=44.5,insurance="None",assigned_worker_id=3),
+            models.Patient(id="HH-NK-01744",name="Janet Wanyama",age=48,gender="F",sub_county="Kuresoi",condition="Diabetes T2",risk="Medium",distance_km=25.8,insurance="NHIF",assigned_worker_id=3),
+            models.Patient(id="HH-NK-01815",name="Michael Odhiambo",age=23,gender="M",sub_county="Nakuru Town",condition="HIV Care",risk="Low",distance_km=5.5,insurance="NHIF",assigned_worker_id=1),
+            models.Patient(id="HH-NK-01900",name="Esther Waweru",age=67,gender="F",sub_county="Subukia",condition="Hypertension",risk="High",distance_km=38.9,insurance="None",assigned_worker_id=4),
+            models.Patient(id="HH-NK-02010",name="Philip Kariuki",age=39,gender="M",sub_county="Njoro",condition="Child Nutrition",risk="Medium",distance_km=28.1,insurance="NHIF",assigned_worker_id=1),
+            models.Patient(id="HH-NK-02155",name="Catherine Mutai",age=52,gender="F",sub_county="Rongai",condition="TB Screening",risk="High",distance_km=49.2,insurance="None",assigned_worker_id=5),
+            models.Patient(id="HH-NK-02231",name="Wilson Otieno",age=29,gender="M",sub_county="Nakuru Town",condition="Mental Health",risk="Low",distance_km=4.2,insurance="NHIF",assigned_worker_id=1),
+            models.Patient(id="HH-NK-02340",name="Priscilla Njoroge",age=44,gender="F",sub_county="Gilgil",condition="Hypertension",risk="Medium",distance_km=15.6,insurance="None",assigned_worker_id=2),
+            models.Patient(id="HH-NK-02410",name="Bernard Kamau",age=63,gender="M",sub_county="Bahati",condition="TB Follow-up",risk="High",distance_km=33.2,insurance="None",assigned_worker_id=1),
+            models.Patient(id="HH-NK-02512",name="Lilian Omondi",age=26,gender="F",sub_county="Naivasha",condition="Maternal Care",risk="Low",distance_km=9.8,insurance="NHIF",assigned_worker_id=6),
+            models.Patient(id="HH-NK-02623",name="Francis Kiprotich",age=57,gender="M",sub_county="Kuresoi",condition="Hypertension",risk="High",distance_km=55.4,insurance="None",assigned_worker_id=3),
+            models.Patient(id="HH-NK-02710",name="Mercy Njeri",age=34,gender="F",sub_county="Molo",condition="HIV Care",risk="Medium",distance_km=21.3,insurance="Partial",assigned_worker_id=3),
+            models.Patient(id="HH-NK-02801",name="Stanley Wachira",age=48,gender="M",sub_county="Subukia",condition="Diabetes T2",risk="Medium",distance_km=27.6,insurance="NHIF",assigned_worker_id=4),
+            models.Patient(id="HH-NK-02900",name="Agnes Cherop",age=72,gender="F",sub_county="Rongai",condition="Hypertension",risk="High",distance_km=42.7,insurance="None",assigned_worker_id=5),
+            models.Patient(id="HH-NK-03010",name="Collins Mugo",age=19,gender="M",sub_county="Nakuru Town",condition="HIV Screening",risk="Low",distance_km=2.8,insurance="None",assigned_worker_id=1),
+            models.Patient(id="HH-NK-03120",name="Veronica Akinyi",age=41,gender="F",sub_county="Gilgil",condition="Child Nutrition",risk="Medium",distance_km=16.9,insurance="NHIF",assigned_worker_id=2),
+        ]
+        db.add_all(patients_list)
+        db.commit()
+        print("✅ Database seeded on startup — 30 patients loaded")
     except Exception as e:
-        logger.error(f"Error during prediction: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Seed error: {e}")
+        db.rollback()
+    finally:
+        db.close()
