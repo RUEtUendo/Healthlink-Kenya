@@ -1,139 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Health Intelligence Dashboard</title>
+"""
+HealthLink Kenya — Streamlit Entry Point
+Starts FastAPI in background, fetches live data, injects into index.html
+"""
+import streamlit as st
+import streamlit.components.v1 as components
+import requests, json, time, os
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+st.set_page_config(
+    page_title="HealthLink Kenya",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
+# ── Hide Streamlit chrome ──────────────────────────────────────
+st.markdown("""
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background: #f5f7fa;
-}
-
-.nav {
-  background: #1e293b;
-  color: white;
-  padding: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.nav button {
-  background: #334155;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.page {
-  display: none;
-  padding: 20px;
-}
-
-.active {
-  display: block;
-}
-
-#nakuru-map {
-  height: 400px;
-  margin-top: 10px;
-}
+#MainMenu, footer, header, [data-testid="stToolbar"] { visibility: hidden !important; }
+.block-container { padding: 0 !important; }
+iframe { border: none !important; }
 </style>
-</head>
+""", unsafe_allow_html=True)
 
-<body>
+# ── Start FastAPI in background thread (once per session) ──────
+if "api_started" not in st.session_state:
+    try:
+        from run_api import launch
+        launch()
+        st.session_state.api_started = True
+    except Exception as e:
+        st.session_state.api_started = False
+        st.session_state.api_error = str(e)
 
-<div class="nav">
-  <button onclick="swNav('dashboard')">Dashboard</button>
-  <button onclick="swNav('geomap')">Map</button>
-</div>
+API = "http://localhost:8000"
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="page active">
-  <h2>Dashboard</h2>
-  <table border="1" cellpadding="8">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Condition</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-</div>
+# ── Wait for API to be ready ───────────────────────────────────
+def wait_for_api(max_wait=10):
+    for _ in range(max_wait):
+        try:
+            r = requests.get(f"{API}/analytics/dashboard/stats", timeout=1)
+            if r.status_code == 200:
+                return True
+        except: pass
+        time.sleep(1)
+    return False
 
-<!-- MAP -->
-<div id="geomap" class="page">
-  <h2>Geo Map</h2>
-  <div id="nakuru-map"></div>
-</div>
+api_ready = wait_for_api()
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+# ── Fetch all data server-side ─────────────────────────────────
+@st.cache_data(ttl=60)
+def fetch_stats():
+    try:
+        r = requests.get(f"{API}/analytics/dashboard/stats", timeout=5)
+        if r.status_code == 200: return r.json()
+    except: pass
+    return {"total": 25, "high_risk": 8, "medium_risk": 10, "low_risk": 7, "coverage_rate": 72.0}
 
+@st.cache_data(ttl=60)
+def fetch_patients():
+    try:
+        r = requests.get(f"{API}/patients/", params={"page": 1, "page_size": 100}, timeout=5)
+        if r.status_code == 200: return r.json().get("data", [])
+    except: pass
+    return []
+
+@st.cache_data(ttl=60)
+def fetch_workers():
+    try:
+        r = requests.get(f"{API}/users/", timeout=5)
+        if r.status_code == 200: return r.json()
+    except: pass
+    return []
+
+stats    = fetch_stats()
+patients = fetch_patients()
+
+# ── Load and inject into HTML ──────────────────────────────────
+html_file = "index.html"
+if not os.path.exists(html_file):
+    st.error("index.html not found in repo root. Please ensure it is committed to GitHub.")
+    st.stop()
+
+with open(html_file, "r", encoding="utf-8") as f:
+    html = f.read()
+
+# Inject live data as JS globals — browser reads these instead of calling localhost
+injection = f"""
 <script>
-// ✅ CLEAN STATE (no duplicates)
-let allPatients = [
-  {id: 1, name: "John Doe", condition: "Diabetes"},
-  {id: 2, name: "Jane Smith", condition: "Hypertension"},
-  {id: 3, name: "Alex Kim", condition: "Asthma"}
-];
+  window.PRELOADED_STATS    = {json.dumps(stats)};
+  window.PRELOADED_PATIENTS = {json.dumps(patients)};
+  window.API_BASE           = "{API}";
+  window.API_READY          = {"true" if api_ready else "false"};
+</script>"""
 
-let dbFiltered = [...allPatients];
+html = html.replace("</head>", injection + "\n</head>", 1)
 
-// ✅ NAVIGATION
-function swNav(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(page).classList.add('active');
-
-  if (page === 'geomap') {
-    setTimeout(initMap, 100);
-  }
-}
-
-// ✅ TABLE RENDER
-function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '';
-
-  dbFiltered.forEach(p => {
-    const row = `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.name}</td>
-        <td>${p.condition}</td>
-      </tr>
-    `;
-    tbody.innerHTML += row;
-  });
-}
-
-// ✅ MAP
-let mapInitialized = false;
-
-function initMap() {
-  if (mapInitialized) return;
-
-  const map = L.map('nakuru-map').setView([-0.3031, 36.0800], 11);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
-
-  L.marker([-0.3031, 36.0800]).addTo(map)
-    .bindPopup("Nakuru Center")
-    .openPopup();
-
-  mapInitialized = true;
-}
-
-// ✅ INIT
-renderTable();
-</script>
-
-</body>
-</html>
+components.html(html, height=960, scrolling=True)
