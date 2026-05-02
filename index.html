@@ -712,44 +712,60 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
   </div>
 </div>
   
-  <!-- PATIENT DB -->
-
+<!-- PATIENT DB -->
 <div id="db" class="page">
-
-  <div class="ph"><div><div class="pt">Patient Database</div><div class="ps">All 130 registered patients · Nakuru County</div></div>
-
+  <div class="ph">
+    <div>
+      <div class="pt">Patient Database</div>
+      <div class="ps">All 130 registered patients · Nakuru County</div>
+    </div>
     <button class="btn btn-t" onclick="exportCSV()">⬇ Export CSV</button>
-
   </div>
-
+  
   <div class="tb">
-
     <input class="fi" id="db-search" placeholder="Search name, ID or condition..." oninput="renderDB()" style="max-width:240px">
+    
+    <!-- NEW: Condition Dropdown -->
+    <select class="fc" id="db-condition" onchange="renderDB()">
+      <option value="">All conditions</option>
+    </select>
 
-    <select class="fc" id="db-risk" onchange="renderDB()"><option value="">All risk</option><option>High</option><option>Medium</option><option>Low</option></select>
-
-    <select class="fc" id="db-ins" onchange="renderDB()"><option value="">All insurance</option><option value="SHA">SHA</option><option value="None">Uninsured</option><option value="Partial">Partial</option></select>
-
-    <select class="fc" id="db-sc" onchange="renderDB()"><option value="">All sub-counties</option></select>
-
-    <select class="fc" id="db-sw" onchange="renderDB()"><option value="">All social workers</option></select>
-
+    <select class="fc" id="db-risk" onchange="renderDB()">
+      <option value="">All risk</option>
+      <option>High</option>
+      <option>Medium</option>
+      <option>Low</option>
+    </select>
+    
+    <select class="fc" id="db-ins" onchange="renderDB()">
+      <option value="">All insurance</option>
+      <option value="SHA">SHA</option>
+      <option value="None">Uninsured</option>
+      <option value="Partial">Partial</option>
+    </select>
+    
+    <select class="fc" id="db-sc" onchange="renderDB()">
+      <option value="">All sub-counties</option>
+    </select>
+    
+    <select class="fc" id="db-sw" onchange="renderDB()">
+      <option value="">All social workers</option>
+    </select>
   </div>
-
+  
   <div class="sum-bar" id="db-summary"></div>
-
-  <div class="tw"><table>
-
-    <thead><tr><th>ID</th><th>Name</th><th>Age/Sex</th><th>Sub-county</th><th>Condition</th><th>Risk</th><th>Distance</th><th>Insurance</th><th>Social Worker</th><th>Last Visit</th></tr></thead>
-
-    <tbody id="db-body"></tbody>
-
-  </table></div>
-
+  
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Age/Sex</th><th>Sub-county</th><th>Condition</th><th>Risk</th><th>Distance</th><th>Insurance</th><th>Social Worker</th><th>Last Visit</th></tr>
+      </thead>
+      <tbody id="db-body"></tbody>
+    </table>
+  </div>
+  
   <div id="db-count" style="font-size:11px;color:var(--mu);margin-top:8px"></div>
-
 </div>
-
 
 
 <!-- REPORTS -->
@@ -1433,97 +1449,69 @@ function selectHH(id){
 
 
 // ── PATIENT DB ────────────────────────────────────────────────
-
 (function(){
-
   const scs=[...new Set(PATIENTS.map(p=>p.sub_county))].sort();
-
   scs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;document.getElementById('db-sc').appendChild(o)});
 
   WORKERS.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent=w.name;document.getElementById('db-sw').appendChild(o)});
 
+  // Populate Conditions for the new dropdown
+  const conds=[...new Set(PATIENTS.map(p=>p.condition))].sort();
+  conds.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;document.getElementById('db-condition').appendChild(o)});
 })();
 
 function renderDB(){
-
   const q=(document.getElementById('db-search').value||'').toLowerCase();
-
   const risk=document.getElementById('db-risk').value;
-
   const ins=document.getElementById('db-ins').value;
-
   const sc=document.getElementById('db-sc').value;
-
   const sw=document.getElementById('db-sw').value;
+  const cond=document.getElementById('db-condition').value; // Get condition value
 
   const data=PATIENTS.filter(p=>
-
     (!q||p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)||p.condition.toLowerCase().includes(q))&&
-
-    (!risk||p.risk===risk)&&(!ins||p.insurance===ins)&&(!sc||p.sub_county===sc)&&(!sw||p.sw_id===sw));
+    (!risk||p.risk===risk)&&
+    (!ins||p.insurance===ins)&&
+    (!sc||p.sub_county===sc)&&
+    (!sw||p.sw_id===sw)&&
+    (!cond||p.condition===cond) // Filter by condition
+  );
 
   const hiCnt=data.filter(p=>p.risk==='High').length;
-
-  const SHA=data.filter(p=>p.insurance==='SHA').length;
-
+  const SHA=data.filter(p=>p.insurance==='SHA').length; // Kept your SHA update
   const unins=data.filter(p=>p.insurance==='None').length;
 
   document.getElementById('db-summary').innerHTML=`
-
     <span class="sum-item"><span class="sum-val">${data.length}</span> total</span>
-
     <span class="sum-item" style="color:var(--dan)"><span class="sum-val">${hiCnt}</span> high risk</span>
-
     <span class="sum-item" style="color:var(--suc)"><span class="sum-val">${SHA}</span> SHA</span>
-
     <span class="sum-item" style="color:var(--mu)"><span class="sum-val">${unins}</span> uninsured</span>
-
     <span class="sum-item" style="color:var(--amb)"><span class="sum-val">${data.filter(p=>p.distance>35).length}</span> exclusion zone</span>`;
 
   document.getElementById('db-body').innerHTML=data.map(p=>`
-
     <tr onclick="openModal('${p.id}')">
-
       <td style="font-family:monospace;font-size:11px;color:var(--mu)">${p.id}</td>
-
       <td style="font-weight:600;color:#fff">${p.name}</td>
-
       <td>${p.age}/${p.gender}</td>
-
       <td>${p.sub_county}</td>
-
       <td>${p.condition}</td>
-
       <td>${rPill(p.risk)}</td>
-
       <td>${p.distance} km</td>
-
       <td>${p.insurance}</td>
-
       <td style="color:var(--mu);font-size:11px">${p.sw_name}</td>
-
       <td style="color:var(--mu)">${p.last_visit==='NaN'?'—':p.last_visit}</td>
-
     </tr>`).join('');
 
   document.getElementById('db-count').textContent=`Showing ${data.length} of ${PATIENTS.length} patients`;
-
 }
 
 function exportCSV(){
-
   const rows=[['ID','Name','Age','Gender','Sub-county','Condition','Risk','Distance','Insurance','Social Worker','Last Visit','Dropout Score']];
-
   PATIENTS.forEach(p=>rows.push([p.id,p.name,p.age,p.gender,p.sub_county,p.condition,p.risk,p.distance,p.insurance,p.sw_name,p.last_visit,p.dropout_score]));
-
   const csv=rows.map(r=>r.join(',')).join('\n');
-
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-
   a.download='HealthLink_Patients_Export.csv';a.click();
-
 }
-
 
 
 // ── REPORTS ───────────────────────────────────────────────────
