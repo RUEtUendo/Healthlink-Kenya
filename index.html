@@ -579,7 +579,6 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 </div>
 
 
-
 <!-- GEO -->
 <div id="geo" class="page">
   <div class="ph">
@@ -587,48 +586,48 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
       <div class="pt">Geospatial Mapper</div>
       <div class="ps">Nakuru County · 408 facilities · 130 households</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-t" onclick="geoToggle('facilities')" id="btn-fac">🏥 Facilities ON</button>
-      <button class="btn btn-t" onclick="geoToggle('households')" id="btn-hh">🏠 Households ON</button>
-      <button class="btn btn-n" onclick="geoToggle('decay')" id="btn-decay">⭕ Decay Ring OFF</button>
-    </div>
   </div>
 
   <div class="sg" id="geo-stats"></div>
 
+  <!-- Unified Toolbar: Toggle Buttons and Dropdown Filters -->
+  <div class="tb" style="margin-bottom: 16px;">
+    <!-- Map Layers -->
+    <button class="btn btn-t" onclick="geoToggle('facilities')" id="btn-fac">🏥 Facilities ON</button>
+    <button class="btn btn-t" onclick="geoToggle('households')" id="btn-hh">🏠 Households ON</button>
+    <button class="btn btn-n" onclick="geoToggle('decay')" id="btn-decay">⭕ Decay Ring OFF</button>
+    
+    <!-- Filters -->
+    <select class="fc" id="geo-risk" onchange="renderGeo()">
+      <option value="">All risk levels</option>
+      <option>High</option>
+      <option>Medium</option>
+      <option>Low</option>
+    </select>
+    
+    <select class="fc" id="geo-vtype" onchange="renderGeo()">
+      <option value="">All visit types</option>
+      <option value="Urgent">Urgent</option>
+      <option value="Regular">Regular</option>
+      <option value="Resolved">Resolved</option>
+    </select>
+    
+    <select class="fc" id="geo-ftype" onchange="renderGeo()">
+      <option value="">All facility types</option>
+      <option>District Hospital</option>
+      <option>Sub-District Hospital</option>
+      <option>Health Centre</option>
+      <option>Dispensary</option>
+      <option>Medical Clinic</option>
+      <option>Nursing Home</option>
+      <option>Maternity Home</option>
+      <option>VCT Centre (Stand-Alone)</option>
+    </select>
+  </div>
+
   <div class="row">
     <div style="flex:1">
       <div class="map-wrap"><div id="geo-map"></div></div>
-      
-      <!-- New Dropdown Filters (Replacing Legend) -->
-      <div class="tb" style="margin-top: 12px;">
-        <select class="fc" id="geo-risk" onchange="renderGeo()">
-          <option value="">All risk levels</option>
-          <option>High</option>
-          <option>Medium</option>
-          <option>Low</option>
-        </select>
-        
-        <select class="fc" id="geo-vtype" onchange="renderGeo()">
-          <option value="">All visit types</option>
-          <option value="Urgent">Urgent</option>
-          <option value="Regular">Regular</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-        
-        <select class="fc" id="geo-ftype" onchange="renderGeo()">
-          <option value="">All facility types</option>
-          <option>District Hospital</option>
-          <option>Sub-District Hospital</option>
-          <option>Health Centre</option>
-          <option>Dispensary</option>
-          <option>Medical Clinic</option>
-          <option>Nursing Home</option>
-          <option>Maternity Home</option>
-          <option>VCT Centre (Stand-Alone)</option>
-        </select>
-      </div>
-
     </div>
     <div style="flex:0 0 280px;min-width:0">
       <div class="card" style="height:480px;overflow-y:auto">
@@ -640,52 +639,80 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
   </div>
 </div>
 <!-- MOBILE CLINIC -->
-
 <div id="mc" class="page">
-
-  <div class="ph"><div><div class="pt">Mobile Clinic Routing</div><div class="ps">Find households · nearest facility auto-match · route line on map</div></div></div>
-
+  <div class="ph">
+    <div>
+      <div class="pt">Mobile Clinic Routing</div>
+      <div class="ps">Find households · nearest facility auto-match · route line on map</div>
+    </div>
+  </div>
+  
   <div class="tb">
-
     <input class="fi" id="mc-search" placeholder="Search household or patient name..." oninput="renderMC()" style="max-width:260px">
+    
+    <!-- NEW: Condition Dropdown Filter -->
+    <select class="fc" id="mc-condition" onchange="renderMC()">
+      <option value="">All conditions</option>
+      <option>Arthritis</option>
+      <option>Asthma</option>
+      <option>Cancer Screening</option>
+      <option>Diabetes T2</option>
+      <option>Epilepsy</option>
+      <option>HIV Care</option>
+      <option>Hypertension</option>
+      <option>Malaria</option>
+      <option>Malnutrition</option>
+      <option>Maternal Care</option>
+      <option>Mental Health</option>
+      <option>Post-surgery</option>
+      <option>Renal Disease</option>
+      <option>Snake Bite</option>
+      <option>TB Follow-up</option>
+      <option>Typhoid</option>
+    </select>
 
-    <select class="fc" id="mc-risk" onchange="renderMC()"><option value="">All risk levels</option><option>High</option><option>Medium</option><option>Low</option></select>
-
-    <select class="fc" id="mc-vtype" onchange="renderMC()"><option value="">All visit types</option><option value="Urgent">Urgent</option><option value="Regular">Regular</option><option value="Resolved">Resolved</option></select>
-
-    <select class="fc" id="mc-ftype" onchange="renderMC()"><option value="">All facility types</option><option>District Hospital</option><option>Sub-District Hospital</option><option>Health Centre</option><option>Dispensary</option><option>Medical Clinic</option><option>Nursing Home</option><option>Maternity Home</option><option>VCT Centre (Stand-Alone)</option></select>
-
+    <select class="fc" id="mc-risk" onchange="renderMC()">
+      <option value="">All risk levels</option>
+      <option>High</option>
+      <option>Medium</option>
+      <option>Low</option>
+    </select>
+    
+    <select class="fc" id="mc-vtype" onchange="renderMC()">
+      <option value="">All visit types</option>
+      <option value="Urgent">Urgent</option>
+      <option value="Regular">Regular</option>
+      <option value="Resolved">Resolved</option>
+    </select>
+    
+    <select class="fc" id="mc-ftype" onchange="renderMC()">
+      <option value="">All facility types</option>
+      <option>District Hospital</option>
+      <option>Sub-District Hospital</option>
+      <option>Health Centre</option>
+      <option>Dispensary</option>
+      <option>Medical Clinic</option>
+      <option>Nursing Home</option>
+      <option>Maternity Home</option>
+      <option>VCT Centre (Stand-Alone)</option>
+    </select>
   </div>
-
+  
   <div class="row">
-
     <div class="col-l">
-
       <div class="card" style="padding:10px">
-
         <div class="ct">Households <span id="mc-count" style="font-weight:400;color:var(--mu)"></span></div>
-
         <div class="hh-list" id="mc-list"></div>
-
       </div>
-
     </div>
-
     <div class="col-r">
-
       <div class="map-wrap"><div id="mc-map"></div></div>
-
       <div id="mc-detail" style="margin-top:10px"></div>
-
     </div>
-
   </div>
-
 </div>
-
-
-
-<!-- PATIENT DB -->
+  
+  <!-- PATIENT DB -->
 
 <div id="db" class="page">
 
