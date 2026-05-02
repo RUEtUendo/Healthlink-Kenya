@@ -1052,148 +1052,114 @@ function renderHub(){
 renderHub();
 
 
-
 // ── GEO MAP ───────────────────────────────────────────────────
 
 function renderGeoStats(){
-
   const hi=PATIENTS.filter(p=>p.risk==='High').length;
-
   document.getElementById('geo-stats').innerHTML=`
-
     <div class="sc"><div class="sv">${FACILITIES.length}</div><div class="sl">Facilities mapped</div></div>
-
     <div class="sc"><div class="sv">${PATIENTS.length}</div><div class="sl">Households</div></div>
-
     <div class="sc"><div class="sv" style="color:var(--dan)">${hi}</div><div class="sl">High-risk households</div></div>
-
     <div class="sc"><div class="sv" style="color:var(--amb)">${PATIENTS.filter(p=>p.distance>35).length}</div><div class="sl">Beyond 35 km</div></div>`;
-
-  // build legend from FAC_COLORS
-
-  const types=[...new Set(FACILITIES.map(f=>f.type))].sort();
-
-  document.getElementById('geo-legend').innerHTML=
-
-    `<span><span class="leg-dot" style="background:#F87171"></span>High risk HH</span>`+
-
-    `<span><span class="leg-dot" style="background:#FCD34D"></span>Medium risk HH</span>`+
-
-    `<span><span class="leg-dot" style="background:#6EE7B7"></span>Low risk HH</span>`+
-
-    types.map(t=>`<span><span class="leg-dot" style="background:${facColor(t)}"></span>${t}</span>`).join('');
-
+  
+  // Note: The old geo-legend code was removed here because we replaced it with the dropdowns!
 }
 
 function initGeoMap(){
-
   renderGeoStats();
-
   geoMap=L.map('geo-map').setView([-0.35,36.08],10);
-
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(geoMap);
-
   geoFacLayer=L.layerGroup();
-
+  
   FACILITIES.forEach(f=>{
-
     L.circleMarker([f.lat,f.lng],{radius:5,fillColor:facColor(f.type),color:'rgba(0,0,0,.3)',weight:1,fillOpacity:.85})
-
       .addTo(geoFacLayer).bindPopup(`<b>${f.name}</b><br><i>${f.type}</i><br>${f.sub_county}`);
-
   });
-
+  
   geoHHLayer=L.layerGroup();
-
   PATIENTS.forEach(p=>{
-
     L.circleMarker([p.lat,p.lng],{radius:7,fillColor:rColor(p.risk),color:'#fff',weight:1,fillOpacity:.9})
-
       .addTo(geoHHLayer).bindPopup(`<b>${p.name}</b><br>${p.id}<br>${p.condition} · ${p.risk} risk<br>Distance: ${p.distance} km<br>SW: ${p.sw_name}`);
-
   });
-
+  
   geoFacLayer.addTo(geoMap);
-
   geoHHLayer.addTo(geoMap);
-
+  
   geoMap.on('click',function(e){
-
     const lat=e.latlng.lat,lng=e.latlng.lng;
-
     if(window._pinMarker) geoMap.removeLayer(window._pinMarker);
-
     window._pinMarker=L.marker([lat,lng],{icon:L.divIcon({html:'📌',iconSize:[20,20],iconAnchor:[10,20],className:''})}).addTo(geoMap);
-
+    
     const near=[...PATIENTS].map(p=>({...p,d:haversine(lat,lng,p.lat,p.lng)})).sort((a,b)=>a.d-b.d).slice(0,10);
-
     const nf=nearestFac(lat,lng);
-
+    
     let html=`<div style="font-size:11px;font-weight:600;color:var(--tm);margin-bottom:8px">Pin: ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>`;
-
+    
     if(nf) html+=`<div style="background:rgba(29,158,117,.1);border-radius:var(--rs);padding:7px 9px;margin-bottom:8px;font-size:11px"><b style="color:#fff">Nearest facility:</b><br>${nf.name} — ${nf.dist.toFixed(1)} km<br><span style="color:var(--mu)">${nf.type} · ${nf.sub_county}</span></div>`;
-
+    
     html+=`<div style="font-size:11px;font-weight:600;color:var(--mu);margin-bottom:6px">10 nearest households:</div>`;
-
+    
     near.forEach((p,i)=>{
-
       const note=p.d>35?'⚠️ Beyond decay threshold':p.d>15?'🟡 Transition zone':'✅ Safe zone';
-
       html+=`<div style="padding:6px 0;border-bottom:1px solid var(--bd);font-size:11px;cursor:pointer" onclick="openModal('${p.id}')">
-
         <b style="color:#fff">${i+1}. ${p.name}</b> <span style="color:var(--mu)">${p.id}</span><br>
-
         ${p.condition} · ${rIcon(p.risk)} ${p.risk} · ${p.d.toFixed(1)} km<br>
-
         <span style="color:var(--mu)">${note}</span></div>`;
-
     });
-
     document.getElementById('geo-decay-results').innerHTML=html;
-
   });
-
 }
 
 function geoToggle(layer){
-
   if(layer==='facilities'){
-
     geoFacOn=!geoFacOn;
-
     geoFacOn?geoFacLayer.addTo(geoMap):geoMap.removeLayer(geoFacLayer);
-
     document.getElementById('btn-fac').textContent='🏥 Facilities '+(geoFacOn?'ON':'OFF');
-
     document.getElementById('btn-fac').className='btn '+(geoFacOn?'btn-t':'btn-g');
-
   } else if(layer==='households'){
-
     geoHHOn=!geoHHOn;
-
     geoHHOn?geoHHLayer.addTo(geoMap):geoMap.removeLayer(geoHHLayer);
-
     document.getElementById('btn-hh').textContent='🏠 Households '+(geoHHOn?'ON':'OFF');
-
     document.getElementById('btn-hh').className='btn '+(geoHHOn?'btn-t':'btn-g');
-
   } else {
-
     geoDecayOn=!geoDecayOn;
-
     if(geoDecayOn){geoDecayCircle=L.circle([-0.3031,36.08],{radius:35000,color:'#FCD34D',fillColor:'#FCD34D',fillOpacity:.05,dashArray:'8 4'}).addTo(geoMap);}
-
     else if(geoDecayCircle) geoMap.removeLayer(geoDecayCircle);
-
     document.getElementById('btn-decay').textContent='⭕ Decay Ring '+(geoDecayOn?'ON':'OFF');
-
     document.getElementById('btn-decay').className='btn '+(geoDecayOn?'btn-t':'btn-g');
-
   }
-
 }
 
+// ⬇️ New renderGeo function for the dropdown filters ⬇️
+function renderGeo() {
+  if (!geoMapInited) return;
 
+  const riskFilter = document.getElementById('geo-risk').value;
+  const vtypeFilter = document.getElementById('geo-vtype').value;
+  const ftypeFilter = document.getElementById('geo-ftype').value;
+
+  // Clear existing markers from the layers
+  geoFacLayer.clearLayers();
+  geoHHLayer.clearLayers();
+
+  // Filter and re-draw Facilities
+  FACILITIES.forEach(f => {
+    if (!ftypeFilter || f.type === ftypeFilter) {
+      L.circleMarker([f.lat, f.lng], {
+        radius: 5, fillColor: facColor(f.type), color: 'rgba(0,0,0,.3)', weight: 1, fillOpacity: .85
+      }).addTo(geoFacLayer).bindPopup(`<b>${f.name}</b><br><i>${f.type}</i><br>${f.sub_county}`);
+    }
+  });
+
+  // Filter and re-draw Households (Patients)
+  PATIENTS.forEach(p => {
+    if ((!riskFilter || p.risk === riskFilter) && (!vtypeFilter || p.visit_type === vtypeFilter)) {
+      L.circleMarker([p.lat, p.lng], {
+        radius: 7, fillColor: rColor(p.risk), color: '#fff', weight: 1, fillOpacity: .9
+      }).addTo(geoHHLayer).bindPopup(`<b>${p.name}</b><br>${p.id}<br>${p.condition} · ${p.risk} risk<br>Distance: ${p.distance} km<br>SW: ${p.sw_name}`);
+    }
+  });
+}
 
 // ── TRIAGE MODAL ──────────────────────────────────────────────
 
