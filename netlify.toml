@@ -1,0 +1,57 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/auth/*"
+  to = "https://healthlink-kenya.onrender.com/auth/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/patients/*"
+  to = "https://healthlink-kenya.onrender.com/patients/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/predict_access"
+  to = "https://healthlink-kenya.onrender.com/predict_access"
+  status = 200
+
+[[redirects]]
+  from = "/predict_retention"
+  to = "https://healthlink-kenya.onrender.com/predict_retention"
+  status = 200
+
+[[redirects]]
+  from = "/config"
+  to = "https://healthlink-kenya.onrender.com/config"
+  status = 200
+
+[[redirects]]
+  from = "/model/*"
+  to = "https://healthlink-kenya.onrender.com/model/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/users/*"
+  to = "https://healthlink-kenya.onrender.com/users/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/analytics/*"
+  to = "https://healthlink-kenya.onrender.com/analytics/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://healthlink-kenya.onrender.com/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/geojson/*"
+  to = "https://healthlink-kenya.onrender.com/geojson/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

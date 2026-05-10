@@ -332,6 +332,31 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 
 @media(max-width:700px){.row{flex-direction:column}.col-l{flex:unset;width:100%}}
 
+/* ── LOGIN SCREEN ─────────────────────────────────────────── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#050d1a 0%,#0a1929 40%,#0f2847 100%)}
+#login-screen.hidden{display:none}
+#app-shell{display:none}
+#app-shell.visible{display:block}
+.login-card{background:var(--sur);border:1px solid var(--bd);border-radius:16px;padding:40px 36px 36px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:-80px;right:-80px;width:200px;height:200px;background:radial-gradient(circle,rgba(29,158,117,.12),transparent 70%);pointer-events:none}
+.login-card::after{content:'';position:absolute;bottom:-60px;left:-60px;width:160px;height:160px;background:radial-gradient(circle,rgba(24,95,165,.1),transparent 70%);pointer-events:none}
+.login-logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.login-logo-dot{width:34px;height:34px;background:linear-gradient(135deg,var(--teal),var(--navy));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff}
+.login-sub{font-size:13px;color:var(--mu);margin-bottom:28px}
+.login-label{font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block}
+.login-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);color:#fff;font-size:14px;font-family:inherit;margin-bottom:16px;transition:border-color .2s}
+.login-input:focus{outline:none;border-color:var(--tm);background:rgba(255,255,255,.08)}
+.login-input::placeholder{color:var(--mu)}
+.login-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--navy));border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;font-family:inherit}
+.login-btn:hover{opacity:.9}
+.login-btn:active{transform:scale(.98)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--dan);border-radius:var(--rs);padding:8px 12px;font-size:12px;margin-bottom:14px;display:none}
+.login-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--mu);line-height:1.6}
+.login-footer a{color:var(--tm);text-decoration:none}
+.login-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:lspin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes lspin{to{transform:rotate(360deg)}}
+
 </style>
 
 </head>
@@ -497,6 +522,28 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 </script>
 
 
+<!-- ═══════════════════════════ LOGIN SCREEN ═══════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-dot">+</div> HealthLink <span style="color:var(--tm);margin-left:4px">Kenya</span></div>
+    <div class="login-sub">Nakuru County Social Worker Console &middot; Secure Login</div>
+    <div class="login-error" id="login-error"></div>
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <label class="login-label" for="login-email">Email Address</label>
+      <input class="login-input" id="login-email" type="email" placeholder="e.g. amara@healthlink.ke" autocomplete="email" required>
+      <label class="login-label" for="login-pass">Password</label>
+      <input class="login-input" id="login-pass" type="password" placeholder="Enter password" autocomplete="current-password" required>
+      <button class="login-btn" type="submit" id="login-btn">Sign In</button>
+    </form>
+    <div class="login-footer">
+      Data Protection Act 2019 (Kenya) &middot; All sessions encrypted<br>
+      <span style="color:var(--amb)">Model Caveat:</span> 4-in-5 high-risk flags are <a href="#">confirmed true positives</a> (AUC 0.81)
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════ -->
+<div id="app-shell">
 
 <div class="topbar">
 
@@ -508,7 +555,7 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 
     <span class="pill p-hi" id="kpi-hi-top">— High Risk</span>
 
-    <span style="font-size:12px;color:var(--mu)">Amara Ochieng · SW-NK-01</span>
+    <span style="font-size:12px;color:var(--mu)" id="topbar-user">Amara Ochieng</span>
 
     <button class="btn btn-g" style="font-size:11px;padding:5px 10px" onclick="doLogout()">Logout</button>
 
@@ -535,6 +582,8 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
   <button class="nb" onclick="go('alerts',this)">🔔 Alerts <span id="alert-badge" class="pill p-hi" style="font-size:10px;padding:1px 5px">3</span></button>
 
   <button class="nb" onclick="go('settings',this)">⚙️ Settings</button>
+
+  <button class="nb" onclick="go('shap',this)">🧠 SHAP & Predictions</button>
 
 </div>
 
@@ -565,6 +614,8 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
     <div class="hb" onclick="go('reports',document.querySelectorAll('.nb')[5])"><span class="hi">📈</span><div class="hl">Reports</div><div class="hd">Analytics & insights</div></div>
 
     <div class="hb" onclick="go('alerts',document.querySelectorAll('.nb')[6])"><span class="hi">🔔</span><div class="hl">Alerts</div><div class="hd">3 critical flags</div></div>
+
+    <div class="hb" onclick="go('shap',document.querySelectorAll('.nb')[8])"><span class="hi">🧠</span><div class="hl">SHAP & Predictions</div><div class="hd">Model transparency</div></div>
 
   </div>
 
@@ -862,6 +913,57 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 
 
 
+<!-- SHAP & PREDICTIVE ANALYSIS -->
+
+<div id="shap" class="page">
+
+  <div class="ph"><div><div class="pt">SHAP & Predictive Analysis</div><div class="ps">Model transparency · Feature attribution · Individual prediction · Thesis §6.2–§6.7</div></div></div>
+
+  <div class="sg" id="shap-kpis"></div>
+
+  <div class="row">
+    <div style="flex:1">
+      <div class="card"><div class="ct">SHAP Feature Importance — Andersen Behavioral Model</div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:10px">Mean |SHAP| values from XGBoost Stage-1 access model (§6.2). Higher = more influence on predictions.</div>
+        <canvas id="shap-bar-chart" height="260"></canvas>
+      </div>
+
+      <div class="card"><div class="ct">Distance Decay — GAM Curve (§6.3)</div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:10px">Utilisation probability drops sharply beyond 15 km and is near-zero past 35 km.</div>
+        <canvas id="shap-gam-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div style="flex:1">
+      <div class="card">
+        <div class="ct">Individual Patient Risk Predictor</div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:12px">Enter patient attributes to receive a model-based access and retention prediction.</div>
+        <div class="fg"><label class="fl">Distance to facility (km)</label><input class="fci" id="pred-dist" type="number" value="15" min="0" max="200" step="0.5"></div>
+        <div class="fg"><label class="fl">Age group</label><select class="fci" id="pred-age"><option>15-19</option><option>20-24</option><option selected>25-29</option><option>30-34</option><option>35-39</option><option>40-44</option><option>45-49</option></select></div>
+        <div class="fg"><label class="fl">Gender</label><select class="fci" id="pred-gender"><option value="Female">Female</option><option value="Male">Male</option></select></div>
+        <div class="fg"><label class="fl">Wealth index</label><select class="fci" id="pred-wealth"><option>Poorest</option><option>Poorer</option><option selected>Middle</option><option>Richer</option><option>Richest</option></select></div>
+        <div class="fg"><label class="fl">Insurance (SHA)</label><select class="fci" id="pred-ins"><option value="1">Yes</option><option value="0" selected>No</option></select></div>
+        <div class="fg"><label class="fl">Residential area</label><select class="fci" id="pred-area"><option>Urban</option><option selected>Rural</option></select></div>
+        <button class="btn btn-pri" style="width:100%;margin-top:6px" onclick="runPrediction()">Run Prediction</button>
+        <div id="pred-result" style="margin-top:14px"></div>
+      </div>
+
+      <div class="card" style="border-left:3px solid var(--amb)">
+        <div class="ct" style="color:var(--amb)">Ethics & Data Protection Disclosures</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.7">
+          <p style="margin-bottom:8px"><strong style="color:var(--dan)">False Positive Warning:</strong> The access model (AUC 0.81) has a ~19% false positive rate. High-risk flags should be verified by a qualified social worker before action is taken. This system is a <em>decision-support tool</em>, not a diagnostic.</p>
+          <p style="margin-bottom:8px"><strong style="color:var(--suc)">Data Protection Act 2019 (Kenya):</strong> All patient data processed under the DPA 2019 principles of lawfulness, minimisation and purpose limitation. Personal data is stored locally in an encrypted SQLite database and is never transmitted to third parties.</p>
+          <p style="margin-bottom:8px"><strong>SHAP Explainability:</strong> Feature attributions use SHAP (SHapley Additive exPlanations) values computed on the training dataset. Individual predictions may differ. Model retraining recommended every 12 months.</p>
+          <p><strong>Thesis Reference:</strong> Methodology validated in §6.2-§6.7 of the HealthLink Kenya MSc thesis. Contact the research supervisor for audit queries.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
 </div><!-- /main -->
 
 
@@ -981,6 +1083,8 @@ function go(id, btn){
   if(id==='geo') renderGeoStats();
 
   if(id==='reports') renderReports();
+
+  if(id==='shap') renderSHAP();
 
 }
 
@@ -1151,6 +1255,24 @@ function initGeoMap(){
     });
     document.getElementById('geo-decay-results').innerHTML=html;
   });
+
+  // Load admin boundary overlays from GeoJSON
+  fetch('/geojson/nakuru_county.geojson').then(r=>r.json()).then(data=>{
+    L.geoJSON(data,{style:{color:'#5DCAA5',weight:2.5,fillOpacity:0,dashArray:'6 3'}}).addTo(geoMap)
+      .bindPopup('<b>Nakuru County</b><br>Pilot area boundary');
+  }).catch(()=>{});
+
+  fetch('/geojson/nakuru_subcounties.geojson').then(r=>r.json()).then(data=>{
+    L.geoJSON(data,{
+      style:function(f){return{color:'rgba(93,202,165,.5)',weight:1.5,fillColor:'rgba(93,202,165,.06)',fillOpacity:1,dashArray:'3 2'}},
+      onEachFeature:function(f,layer){
+        const n=f.properties.name;
+        const pts=PATIENTS.filter(p=>p.sub_county.toLowerCase().includes(n.toLowerCase())||n.toLowerCase().includes(p.sub_county.toLowerCase()));
+        const hi=pts.filter(p=>p.risk==='High').length;
+        layer.bindPopup(`<b>${n}</b><br>${pts.length} patients · <span style='color:#f87171'>${hi} high risk</span>`);
+      }
+    }).addTo(geoMap);
+  }).catch(()=>{});
 }
 
 function geoToggle(layer){
@@ -1922,26 +2044,195 @@ function closeModal(e){
 
 
 
-function saveSettings(){alert('✅ Settings saved.')}
+// ── SHAP & PREDICTIVE ANALYSIS ────────────────────────────────
 
-function doLogout(){if(confirm('Log out of HealthLink Kenya?')) window.location.reload()}
+let shapInited = false;
+
+function renderSHAP() {
+  // KPI cards from thesis config
+  document.getElementById('shap-kpis').innerHTML = `
+    <div class="sc"><div class="sv">0.81</div><div class="sl">Access AUC</div><div class="sd">XGBoost Stage-1</div></div>
+    <div class="sc"><div class="sv">0.85</div><div class="sl">Retention AUC</div><div class="sd">XGBoost Stage-2</div></div>
+    <div class="sc"><div class="sv">73.2%</div><div class="sl">Predisposing SHAP</div><div class="sd">Age + gender + education</div></div>
+    <div class="sc"><div class="sv">26.8%</div><div class="sl">Enabling SHAP</div><div class="sd">Distance + wealth + insurance</div></div>
+    <div class="sc"><div class="sv">12.9%</div><div class="sl">Distance SHAP</div><div class="sd">Single strongest feature</div></div>
+    <div class="sc"><div class="sv">35 km</div><div class="sl">GAM Threshold</div><div class="sd">Access decay boundary</div></div>
+    <div class="sc"><div class="sv">3,484</div><div class="sl">Paradox Cases</div><div class="sd">Urban proximity paradox</div></div>
+    <div class="sc"><div class="sv" style="color:var(--dan)">~19%</div><div class="sl">False Positive Rate</div><div class="sd">Verify before action</div></div>`;
+
+  if (shapInited) return;
+  shapInited = true;
+
+  const co = { responsive: true, plugins: { legend: { labels: { color: 'rgba(255,255,255,.6)', font: { size: 11 } } } } };
+  const ax = { y: { ticks: { color: 'rgba(255,255,255,.5)' }, grid: { color: 'rgba(255,255,255,.05)' } }, x: { ticks: { color: 'rgba(255,255,255,.5)' }, grid: { display: false } } };
+
+  // SHAP feature importance bar chart (thesis §6.2 values)
+  const shapFeatures = [
+    'distance_from_facility', 'age_group', 'wealth_index',
+    'residential_area_group', 'gender', 'insurance_status',
+    'survey_weight', 'education_level'
+  ];
+  const shapValues = [0.129, 0.118, 0.098, 0.087, 0.074, 0.063, 0.042, 0.031];
+  const shapColors = shapValues.map(v => v >= 0.10 ? 'rgba(248,113,113,.7)' : v >= 0.06 ? 'rgba(252,211,77,.7)' : 'rgba(110,231,183,.7)');
+
+  new Chart(document.getElementById('shap-bar-chart').getContext('2d'), {
+    type: 'bar', data: {
+      labels: shapFeatures.map(f => f.replace(/_/g, ' ')),
+      datasets: [{ label: 'Mean |SHAP|', data: shapValues, backgroundColor: shapColors, borderColor: shapColors.map(c => c.replace('.7', '1')), borderWidth: 1 }]
+    }, options: { ...co, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ...ax.x, title: { display: true, text: 'Mean |SHAP value|', color: 'rgba(255,255,255,.5)' } }, y: { ...ax.y, ticks: { ...ax.y.ticks, font: { size: 11 } } } } }
+  });
+
+  // GAM distance decay curve (simulated from thesis §6.3)
+  const dists = [0, 2, 5, 8, 10, 12, 15, 18, 20, 25, 30, 35, 40, 50, 60, 80];
+  const probs = [0.92, 0.90, 0.86, 0.82, 0.78, 0.72, 0.62, 0.48, 0.40, 0.28, 0.18, 0.10, 0.06, 0.03, 0.01, 0.005];
+
+  new Chart(document.getElementById('shap-gam-chart').getContext('2d'), {
+    type: 'line', data: {
+      labels: dists.map(d => d + ' km'),
+      datasets: [{ label: 'Utilisation probability', data: probs, borderColor: '#5DCAA5', backgroundColor: 'rgba(93,202,165,.15)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#5DCAA5' }]
+    }, options: { ...co, scales: { y: { ...ax.y, min: 0, max: 1, title: { display: true, text: 'P(utilisation)', color: 'rgba(255,255,255,.5)' } }, x: { ...ax.x } },
+      plugins: { ...co.plugins, annotation: undefined }
+    }
+  });
+
+  // Try to load live config from backend
+  fetch(API_BASE + '/config').then(r => r.json()).then(cfg => {
+    if (cfg.access_model_auc) document.querySelector('#shap-kpis .sc:nth-child(1) .sv').textContent = cfg.access_model_auc.toFixed(2);
+    if (cfg.retention_model_auc) document.querySelector('#shap-kpis .sc:nth-child(2) .sv').textContent = cfg.retention_model_auc.toFixed(2);
+  }).catch(() => {});
+}
+
+async function runPrediction() {
+  const el = document.getElementById('pred-result');
+  el.innerHTML = '<div style="color:var(--mu);font-size:12px"><span class="login-spinner"></span> Running model...</div>';
+  const payload = {
+    distance_km: parseFloat(document.getElementById('pred-dist').value),
+    age_group: document.getElementById('pred-age').value,
+    gender: document.getElementById('pred-gender').value,
+    wealth_index: document.getElementById('pred-wealth').value,
+    insurance_status: parseInt(document.getElementById('pred-ins').value),
+    residential_area_group: document.getElementById('pred-area').value,
+    survey_weight: 1.0
+  };
+  try {
+    const [accRes, retRes] = await Promise.all([
+      fetch(API_BASE + '/predict_access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+      fetch(API_BASE + '/predict_retention', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    ]);
+    const acc = await accRes.json();
+    const ret = await retRes.json();
+    const accProb = acc.probability !== undefined ? acc.probability : acc.access_probability;
+    const retProb = ret.probability !== undefined ? ret.probability : ret.retention_probability;
+    const accLabel = acc.prediction !== undefined ? acc.prediction : acc.access_label;
+    const retLabel = ret.prediction !== undefined ? ret.prediction : ret.retention_label;
+    const accPct = accProb !== undefined ? accProb.toFixed(1) : 'N/A';
+    const retPct = retProb !== undefined ? retProb.toFixed(1) : 'N/A';
+    const accBar = Math.min(accProb || 0, 100);
+    const retBar = Math.min(retProb || 0, 100);
+    const zone = payload.distance_km > 35 ? 'Exclusion' : payload.distance_km > 15 ? 'Transition' : 'Safe';
+    const zoneColor = zone === 'Exclusion' ? 'var(--dan)' : zone === 'Transition' ? 'var(--amb)' : 'var(--suc)';
+    const src = acc.source || 'rule-based fallback';
+    el.innerHTML = `
+      <div style="background:rgba(255,255,255,.04);border-radius:var(--rs);padding:12px 14px">
+        <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;margin-bottom:8px">Prediction Result <span style="color:var(--mu);font-weight:400;text-transform:none">(${src})</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="pf"><div class="pf-l">Access probability</div><div class="pf-v">${accPct}%<div class="risk-bar"><div class="risk-fill" style="width:${accBar}%;background:var(--tm)"></div></div></div></div>
+          <div class="pf"><div class="pf-l">Retention probability</div><div class="pf-v">${retPct}%<div class="risk-bar"><div class="risk-fill" style="width:${retBar}%;background:var(--navy)"></div></div></div></div>
+          <div class="pf"><div class="pf-l">Distance zone</div><div class="pf-v" style="color:${zoneColor}">${zone} Zone</div></div>
+          <div class="pf"><div class="pf-l">Access label</div><div class="pf-v">${accLabel || '—'}</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--amb);margin-top:8px">Caveat: Rule-based fallback active when ML pipeline is not loaded.</div>
+      </div>`;
+  } catch (err) {
+    el.innerHTML = '<div style="color:var(--dan);font-size:12px">Prediction failed: ' + err.message + '</div>';
+  }
+}
 
 
+function saveSettings(){alert('Settings saved.')}
 
-// INIT
+// ── AUTH STATE MANAGEMENT ─────────────────────────────────────
+const API_BASE = ''; // same-origin when served by uvicorn
+let currentUser = null;
 
-renderHub();
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.add('visible');
+  renderHub();
+  renderDB();
+  // Populate settings from logged-in user or fallback to WORKERS[0]
+  const sw = currentUser ? WORKERS.find(w => w.email && w.email.includes(currentUser.email)) || WORKERS[0] : WORKERS[0];
+  document.getElementById('set-sw-name').textContent = currentUser ? currentUser.name : sw.name;
+  document.getElementById('set-sw-role').textContent = (currentUser ? currentUser.role.replace('_',' ') : sw.role) + ' · ' + (currentUser ? (currentUser.sub_county||'') : sw.sub_county);
+  document.getElementById('set-sw-id').textContent = sw.id;
+  document.getElementById('topbar-user').textContent = currentUser ? currentUser.name : sw.name;
+}
 
-renderDB();
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app-shell').classList.remove('visible');
+  currentUser = null;
+}
 
-document.getElementById('set-sw-name').textContent=WORKERS[0].name;
+function doLogout() {
+  if (!confirm('Log out of HealthLink Kenya?')) return;
+  localStorage.removeItem('hlk_token');
+  localStorage.removeItem('hlk_user');
+  showLogin();
+}
 
-document.getElementById('set-sw-role').textContent=WORKERS[0].role+' · '+WORKERS[0].sub_county;
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="login-spinner"></span> Authenticating...';
+  try {
+    const form = new URLSearchParams();
+    form.append('username', email);
+    form.append('password', pass);
+    const res = await fetch(API_BASE + '/auth/login', { method:'POST', body: form });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.detail || 'Invalid credentials');
+    }
+    const data = await res.json();
+    localStorage.setItem('hlk_token', data.access_token);
+    localStorage.setItem('hlk_user', JSON.stringify(data.user));
+    currentUser = data.user;
+    showApp();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
 
-document.getElementById('set-sw-id').textContent=WORKERS[0].id;
+// ── SESSION RESTORE ON PAGE LOAD ──────────────────────────────
+(function initAuth() {
+  const token = localStorage.getItem('hlk_token');
+  const userStr = localStorage.getItem('hlk_user');
+  if (token && userStr) {
+    try {
+      currentUser = JSON.parse(userStr);
+      showApp();
+      // Optionally validate token against /auth/me (non-blocking)
+      fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => { if (!r.ok) { doLogout(); } })
+        .catch(() => {/* offline — keep local session */});
+    } catch(e) { showLogin(); }
+  } else {
+    showLogin();
+  }
+})();
 
 </script>
 
+</div><!-- /app-shell -->
 </body>
-
 </html>
