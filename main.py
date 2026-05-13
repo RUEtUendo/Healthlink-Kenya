@@ -45,11 +45,11 @@ def seed_database():
             print("[OK] Database already seeded.")
             return
         workers = [
-            models.User(id=1, name="Amara Ochieng",   email="amara@healthlink.ke",   hashed_password=pwd_ctx.hash("sw2026"),    role="social_worker",  sub_county="Bahati",      phone="+254 712 100 001"),
-            models.User(id=2, name="Joyce Mutua",     email="joyce@healthlink.ke",   hashed_password=pwd_ctx.hash("sw2026"),    role="social_worker",  sub_county="Njoro",       phone="+254 712 100 002"),
-            models.User(id=3, name="David Muriithi",  email="david@healthlink.ke",   hashed_password=pwd_ctx.hash("sw2026"),    role="social_worker",  sub_county="Molo",        phone="+254 712 100 003"),
-            models.User(id=4, name="Faith Wanjiku",   email="faith@healthlink.ke",   hashed_password=pwd_ctx.hash("sw2026"),    role="social_worker",  sub_county="Subukia",     phone="+254 712 100 004"),
-            models.User(id=5, name="James Kipkemboi", email="james@healthlink.ke",   hashed_password=pwd_ctx.hash("sw2026"),    role="social_worker",  sub_county="Kuresoi",     phone="+254 712 100 005"),
+            models.User(id=1, name="Amara Ochieng",   email="amara@healthlink.ke",   hashed_password=pwd_ctx.hash("hw2026"),    role="social_worker",  sub_county="Bahati",      phone="+254 712 100 001"),
+            models.User(id=2, name="Joyce Mutua",     email="joyce@healthlink.ke",   hashed_password=pwd_ctx.hash("hw2026"),    role="social_worker",  sub_county="Njoro",       phone="+254 712 100 002"),
+            models.User(id=3, name="David Muriithi",  email="david@healthlink.ke",   hashed_password=pwd_ctx.hash("hw2026"),    role="social_worker",  sub_county="Molo",        phone="+254 712 100 003"),
+            models.User(id=4, name="Faith Wanjiku",   email="faith@healthlink.ke",   hashed_password=pwd_ctx.hash("hw2026"),    role="social_worker",  sub_county="Subukia",     phone="+254 712 100 004"),
+            models.User(id=5, name="James Kipkemboi", email="james@healthlink.ke",   hashed_password=pwd_ctx.hash("hw2026"),    role="social_worker",  sub_county="Kuresoi",     phone="+254 712 100 005"),
             models.User(id=6, name="Supervisor Admin",email="admin@healthlink.ke",   hashed_password=pwd_ctx.hash("admin2026"), role="supervisor",     sub_county="Nakuru Town", phone="+254 712 100 006"),
         ]
         db.add_all(workers)
