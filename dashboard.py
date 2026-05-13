@@ -73,6 +73,20 @@ def fetch_workers():
 
 stats    = fetch_stats()
 patients = fetch_patients()
+workers  = fetch_workers()
+
+# ── Fetch user credentials server-side for offline auth ────────
+@st.cache_data(ttl=300)
+def fetch_users_for_auth():
+    """Fetch user list from FastAPI so Streamlit can inject auth data."""
+    try:
+        r = requests.get(f"{API}/users/", timeout=5)
+        if r.status_code == 200:
+            return r.json()
+    except: pass
+    return []
+
+auth_users = fetch_users_for_auth()
 
 # ── Load and inject into HTML ──────────────────────────────────
 html_file = "index.html"
@@ -88,8 +102,11 @@ injection = f"""
 <script>
   window.PRELOADED_STATS    = {json.dumps(stats)};
   window.PRELOADED_PATIENTS = {json.dumps(patients)};
+  window.PRELOADED_WORKERS  = {json.dumps(workers)};
+  window.PRELOADED_USERS    = {json.dumps(auth_users)};
   window.API_BASE           = "{API}";
   window.API_READY          = {"true" if api_ready else "false"};
+  window.STREAMLIT_MODE     = true;
 </script>"""
 
 html = html.replace("</head>", injection + "\n</head>", 1)

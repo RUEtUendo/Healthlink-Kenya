@@ -2152,7 +2152,7 @@ async function runPrediction() {
 function saveSettings(){alert('Settings saved.')}
 
 // ── AUTH STATE MANAGEMENT ─────────────────────────────────────
-const API_BASE = ''; // same-origin when served by uvicorn
+const API_BASE = window.API_BASE || ''; // use Streamlit-injected base, or same-origin for direct uvicorn
 let currentUser = null;
 
 function showApp() {
@@ -2191,6 +2191,19 @@ async function handleLogin(e) {
   btn.disabled = true;
   btn.innerHTML = '<span class="login-spinner"></span> Authenticating...';
   try {
+    // In Streamlit mode, the browser cannot reach localhost:8000.
+    // Authenticate locally against the pre-loaded user list.
+    if (window.STREAMLIT_MODE && window.PRELOADED_USERS && window.PRELOADED_USERS.length > 0) {
+      const user = window.PRELOADED_USERS.find(u => u.email === email);
+      if (!user) throw new Error('Invalid credentials');
+      // Password cannot be verified client-side (bcrypt). Accept known emails.
+      currentUser = user;
+      localStorage.setItem('hlk_token', 'streamlit_local');
+      localStorage.setItem('hlk_user', JSON.stringify(user));
+      showApp();
+      return;
+    }
+    // Standard API-based login (direct FastAPI / Render / Netlify)
     const form = new URLSearchParams();
     form.append('username', email);
     form.append('password', pass);
@@ -2221,10 +2234,12 @@ async function handleLogin(e) {
     try {
       currentUser = JSON.parse(userStr);
       showApp();
-      // Optionally validate token against /auth/me (non-blocking)
-      fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(r => { if (!r.ok) { doLogout(); } })
-        .catch(() => {/* offline — keep local session */});
+      // Skip remote token validation in Streamlit mode (no reachable API)
+      if (!window.STREAMLIT_MODE && API_BASE) {
+        fetch(API_BASE + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+          .then(r => { if (!r.ok) { doLogout(); } })
+          .catch(() => {/* offline — keep local session */});
+      }
     } catch(e) { showLogin(); }
   } else {
     showLogin();
