@@ -2121,90 +2121,38 @@ function renderSHAP() {
 }
 
 async function runPrediction() {
-  const el = document.getElementById('pred-result');
+  var el = document.getElementById('pred-result');
   el.innerHTML = '<div style="color:var(--mu);font-size:12px"><span class="login-spinner"></span> Running model...</div>';
-  const payload = {
-    distance_km: parseFloat(document.getElementById('pred-dist').value),
-    age_group: document.getElementById('pred-age').value,
-    gender: document.getElementById('pred-gender').value,
-    wealth_index: document.getElementById('pred-wealth').value,
-    insurance_status: parseInt(document.getElementById('pred-ins').value),
-    residential_area_group: document.getElementById('pred-area').value,
-    survey_weight: 1.0
-  };
-
-  let acc, ret;
-  const GAM_THRESHOLD = 35;
-
-  // In Streamlit mode, run prediction client-side (rule-based fallback from thesis §6.5)
+  var p = {distance_km:parseFloat(document.getElementById('pred-dist').value),age_group:document.getElementById('pred-age').value,gender:document.getElementById('pred-gender').value,wealth_index:document.getElementById('pred-wealth').value,insurance_status:parseInt(document.getElementById('pred-ins').value),residential_area_group:document.getElementById('pred-area').value};
+  var acc, ret;
   if (window.STREAMLIT_MODE) {
-    // Access score — mirrors model_service.predict_access fallback
-    let accessScore = 72.0;
-    if (payload.distance_km > GAM_THRESHOLD) accessScore -= (payload.distance_km - GAM_THRESHOLD) * 0.5;
-    if (payload.insurance_status === 0) accessScore -= 8;
-    if (payload.wealth_index === 'Poorest' || payload.wealth_index === 'Poorer') accessScore -= 6;
-    if (payload.residential_area_group === 'Rural') accessScore -= 4;
-    accessScore = Math.max(15, Math.min(95, accessScore));
-
-    // Retention score — mirrors model_service.predict_retention fallback
-    let retScore = 50.0;
-    if (payload.distance_km > GAM_THRESHOLD) retScore += (payload.distance_km - GAM_THRESHOLD) * 0.8;
-    if (payload.insurance_status === 0) retScore += 10;
-    retScore = Math.max(5, Math.min(95, retScore));
-
-    acc = { probability: Math.round(accessScore * 10) / 10, source: 'client-side rule-based', access_label: accessScore >= 60 ? 'Likely Access' : 'At Risk' };
-    ret = { retention_probability: Math.round(retScore * 10) / 10, dropout_risk: retScore >= 70, source: 'client-side rule-based' };
+    var aS=72; if(p.distance_km>35) aS-=(p.distance_km-35)*0.5; if(p.insurance_status===0) aS-=8;
+    if(p.wealth_index==='Poorest'||p.wealth_index==='Poorer') aS-=6; if(p.residential_area_group==='Rural') aS-=4;
+    aS=Math.max(15,Math.min(95,aS));
+    var rS=50; if(p.distance_km>35) rS+=(p.distance_km-35)*0.8; if(p.insurance_status===0) rS+=10;
+    rS=Math.max(5,Math.min(95,rS));
+    acc={probability:Math.round(aS*10)/10,source:'client-side rule-based',access_label:aS>=60?'Likely Access':'At Risk'};
+    ret={retention_probability:Math.round(rS*10)/10};
   } else {
-    // Standard API-based prediction (direct FastAPI / Render / Netlify)
     try {
-      const [accRes, retRes] = await Promise.all([
-        fetch(API_BASE + '/predict_access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-        fetch(API_BASE + '/predict_retention', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      ]);
-      acc = await accRes.json();
-      ret = await retRes.json();
-    } catch (err) {
-      el.innerHTML = '<div style="color:var(--dan);font-size:12px">Prediction failed: ' + err.message + '</div>';
-      return;
-    }
+      var r=await Promise.all([fetch(API_BASE+'/predict_access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}),fetch(API_BASE+'/predict_retention',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})]);
+      acc=await r[0].json(); ret=await r[1].json();
+    } catch(e){el.innerHTML='<div style="color:var(--dan);font-size:12px">Prediction failed: '+e.message+'</div>';return;}
   }
-
   try {
-    const accProb = acc.probability !== undefined ? acc.probability : acc.access_probability;
-    const retProb = ret.probability !== undefined ? ret.probability : ret.retention_probability;
-    const accLabel = acc.prediction !== undefined ? acc.prediction : (acc.access_label || '—');
-    const accPct = accProb !== undefined ? accProb.toFixed(1) : 'N/A';
-    const retPct = retProb !== undefined ? retProb.toFixed(1) : 'N/A';
-    const accBar = Math.min(accProb || 0, 100);
-    const retBar = Math.min(retProb || 0, 100);
-    const zone = payload.distance_km > 35 ? 'Exclusion' : payload.distance_km > 15 ? 'Transition' : 'Safe';
-    const zoneColor = zone === 'Exclusion' ? 'var(--dan)' : zone === 'Transition' ? 'var(--amb)' : 'var(--suc)';
-    const src = acc.source || 'rule-based fallback';
-    el.innerHTML = `
-      <div style="background:rgba(255,255,255,.04);border-radius:var(--rs);padding:12px 14px">
-        <div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;margin-bottom:8px">Prediction Result <span style="color:var(--mu);font-weight:400;text-transform:none">(${src})</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div class="pf"><div class="pf-l">Access probability</div><div class="pf-v">${accPct}%<div class="risk-bar"><div class="risk-fill" style="width:${accBar}%;background:var(--tm)"></div></div></div></div>
-          <div class="pf"><div class="pf-l">Retention probability</div><div class="pf-v">${retPct}%<div class="risk-bar"><div class="risk-fill" style="width:${retBar}%;background:var(--navy)"></div></div></div></div>
-          <div class="pf"><div class="pf-l">Distance zone</div><div class="pf-v" style="color:${zoneColor}">${zone} Zone</div></div>
-          <div class="pf"><div class="pf-l">Access label</div><div class="pf-v">${accLabel}</div></div>
-        </div>
-        <div style="font-size:11px;color:var(--amb);margin-top:8px">${window.STREAMLIT_MODE ? 'Client-side rule-based approximation (thesis §6.5). Deploy on Render for full XGBoost inference.' : 'Caveat: Rule-based fallback active when ML pipeline is not loaded.'}</div>
-      </div>`;
-  } catch (err) {
-    el.innerHTML = '<div style="color:var(--dan);font-size:12px">Prediction failed: ' + err.message + '</div>';
-  }
+    var aP=acc.probability!==undefined?acc.probability:acc.access_probability, rP=ret.probability!==undefined?ret.probability:ret.retention_probability;
+    var aL=acc.access_label||'\u2014', aPct=aP!==undefined?aP.toFixed(1):'N/A', rPct=rP!==undefined?rP.toFixed(1):'N/A';
+    var aB=Math.min(aP||0,100), rB=Math.min(rP||0,100);
+    var z=p.distance_km>35?'Exclusion':p.distance_km>15?'Transition':'Safe';
+    var zC=z==='Exclusion'?'var(--dan)':z==='Transition'?'var(--amb)':'var(--suc)', src=acc.source||'rule-based';
+    el.innerHTML='<div style="background:rgba(255,255,255,.04);border-radius:var(--rs);padding:12px 14px"><div style="font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;margin-bottom:8px">Prediction Result ('+src+')</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="pf"><div class="pf-l">Access probability</div><div class="pf-v">'+aPct+'%<div class="risk-bar"><div class="risk-fill" style="width:'+aB+'%;background:var(--tm)"></div></div></div></div><div class="pf"><div class="pf-l">Retention probability</div><div class="pf-v">'+rPct+'%<div class="risk-bar"><div class="risk-fill" style="width:'+rB+'%;background:var(--navy)"></div></div></div></div><div class="pf"><div class="pf-l">Distance zone</div><div class="pf-v" style="color:'+zC+'">'+z+' Zone</div></div><div class="pf"><div class="pf-l">Access label</div><div class="pf-v">'+aL+'</div></div></div></div>';
+  } catch(e){el.innerHTML='<div style="color:var(--dan);font-size:12px">Prediction failed: '+e.message+'</div>';}
 }
 
-
-function saveSettings(){
-  const county = document.getElementById('set-county').value;
-  const checks = document.querySelectorAll('#set-subcounties input[type=checkbox]:checked');
-  const subcounties = Array.from(checks).map(c => c.value);
-  const threshold = document.getElementById('thresh-range').value;
-  const hrThreshold = document.getElementById('hr-range').value;
-  alert('✅ Settings saved.\n\nCounty: ' + county + '\nSub-counties: ' + subcounties.join(', ') + '\nDistance threshold: ' + threshold + ' km\nHigh-risk flag: ' + hrThreshold);
-}
+var KENYA_COUNTIES = {"Baringo":["Baringo Central","Baringo North","Baringo South","Eldama Ravine","Mogotio","Tiaty"],"Bomet":["Bomet Central","Bomet East","Chepalungu","Konoin","Sotik"],"Bungoma":["Bumula","Kabuchai","Kanduyi","Kimilili","Mt. Elgon","Sirisia","Tongaren","Webuye East","Webuye West"],"Busia":["Budalangi","Butula","Funyula","Matayos","Nambale","Teso North","Teso South"],"Elgeyo-Marakwet":["Keiyo North","Keiyo South","Marakwet East","Marakwet West"],"Embu":["Gachoka","Manyatta","Runyenjes","Siakago"],"Garissa":["Balambala","Dadaab","Dujis","Fafi","Ijara","Lagdera"],"Homa Bay":["Homa Bay","Kabondo Kasipul","Karachuonyo","Kasipul","Ndhiwa","Rangwe","Suba North","Suba South"],"Isiolo":["Isiolo North","Isiolo South"],"Kajiado":["Kajiado Central","Kajiado East","Kajiado North","Kajiado South","Kajiado West"],"Kakamega":["Butere","Ikolomani","Khwisero","Likuyani","Lugari","Lurambi","Malava","Matungu","Mumias East","Mumias West","Navakholo","Shinyalu"],"Kericho":["Ainamoi","Belgut","Buret","Kipkelion East","Kipkelion West","Sigowet/Soin"],"Kiambu":["Gatundu North","Gatundu South","Githunguri","Juja","Kabete","Kiambaa","Kiambu","Kikuyu","Lari","Limuru","Ruiru","Thika Town"],"Kilifi":["Ganze","Kaloleni","Kilifi North","Kilifi South","Magarini","Malindi","Rabai"],"Kirinyaga":["Gichugu","Kirinyaga Central","Mwea","Ndia"],"Kisii":["Bobasi","Bomachoge Borabu","Bomachoge Chache","Bonchari","Kitutu Chache North","Kitutu Chache South","Nyaribari Chache","Nyaribari Masaba","South Mugirango"],"Kisumu":["Kisumu Central","Kisumu East","Kisumu West","Muhoroni","Nyakach","Nyando","Seme"],"Kitui":["Kitui Central","Kitui East","Kitui Rural","Kitui South","Kitui West","Mwingi East","Mwingi North","Mwingi West"],"Kwale":["Kinango","Lunga Lunga","Matuga","Msambweni"],"Laikipia":["Laikipia East","Laikipia North","Laikipia West"],"Lamu":["Lamu East","Lamu West"],"Machakos":["Kangundo","Kathiani","Machakos Town","Masinga","Matungulu","Mavoko","Mwala","Yatta"],"Makueni":["Kaiti","Kibwezi East","Kibwezi West","Kilome","Makueni","Mbooni"],"Mandera":["Banissa","Lafey","Mandera East","Mandera North","Mandera South","Mandera West"],"Marsabit":["Laisamis","Moyale","North Horr","Saku"],"Meru":["Buuri","Central Imenti","Igembe Central","Igembe North","Igembe South","North Imenti","South Imenti","Tigania East","Tigania West"],"Migori":["Awendo","Kuria East","Kuria West","Nyatike","Rongo","Suna East","Suna West","Uriri"],"Mombasa":["Changamwe","Jomvu","Kisauni","Likoni","Mvita","Nyali"],"Murang'a":["Gatanga","Kandara","Kangema","Kigumo","Kiharu","Maragwa","Mathioya"],"Nairobi":["Dagoretti","Embakasi Central","Embakasi East","Embakasi North","Embakasi South","Embakasi West","Kamukunji","Kasarani","Kibra","Kilimani","Langata","Makadara","Mathare","Roysambu","Ruaraka","Starehe","Westlands"],"Nakuru":["Bahati","Gilgil","Kuresoi North","Kuresoi South","Molo","Naivasha","Nakuru Town East","Nakuru Town West","Njoro","Rongai","Subukia"],"Nandi":["Aldai","Chesumei","Emgwen","Mosop","Nandi Hills","Tinderet"],"Narok":["Emurua Dikirr","Kilgoris","Narok East","Narok North","Narok South","Narok West"],"Nyamira":["Borabu","Kitutu Masaba","North Mugirango","West Mugirango"],"Nyandarua":["Kinangop","Kipipiri","Ndaragwa","Ol Jorok","Ol Kalou"],"Nyeri":["Kieni","Mathira","Mukurweni","Nyeri Town","Othaya","Tetu"],"Samburu":["Samburu East","Samburu North","Samburu West"],"Siaya":["Alego Usonga","Bondo","Gem","Rarieda","Ugenya","Ugunja"],"Taita Taveta":["Mwatate","Taveta","Voi","Wundanyi"],"Tana River":["Bura","Galole","Garsen"],"Tharaka-Nithi":["Maara","Nithi","Tharaka"],"Trans Nzoia":["Cherangany","Endebess","Kiminini","Kwanza","Saboti"],"Turkana":["Loima","Turkana Central","Turkana East","Turkana North","Turkana South","Turkana West"],"Uasin Gishu":["Ainabkoi","Kapseret","Kesses","Moiben","Soy","Turbo"],"Vihiga":["Emuhaya","Hamisi","Luanda","Sabatia","Vihiga"],"Wajir":["Eldas","Tarbaj","Wajir East","Wajir North","Wajir South","Wajir West"],"West Pokot":["Kacheliba","Kapenguria","Pokot South","Sigor"]};
+function updateSubcounties(){var c=document.getElementById('set-county').value,scs=KENYA_COUNTIES[c]||[],h='';for(var i=0;i<scs.length;i++)h+='<label class="sc-check"><input type="checkbox" value="'+scs[i]+'" checked> '+scs[i]+'</label>';document.getElementById('set-subcounties').innerHTML=h;}
+(function(){var s=document.getElementById('set-county');if(!s)return;var k=Object.keys(KENYA_COUNTIES).sort();for(var i=0;i<k.length;i++){var o=document.createElement('option');o.value=k[i];o.textContent=k[i];if(k[i]==='Nakuru')o.selected=true;s.appendChild(o);}updateSubcounties();})();
+function saveSettings(){var c=document.getElementById('set-county').value,ch=document.querySelectorAll('#set-subcounties input:checked'),scs=[];for(var i=0;i<ch.length;i++)scs.push(ch[i].value);alert('Settings saved.\nCounty: '+c+'\nSub-counties ('+scs.length+'): '+scs.join(', ')+'\nDistance: '+document.getElementById('thresh-range').value+' km');}
 
 // ── AUTH STATE MANAGEMENT ─────────────────────────────────────
 const API_BASE = window.API_BASE || ''; // use Streamlit-injected base, or same-origin for direct uvicorn
@@ -2230,7 +2178,6 @@ function showLogin() {
 }
 
 function doLogout() {
-  if (!confirm('Log out of HealthLink Kenya?')) return;
   localStorage.removeItem('hlk_token');
   localStorage.removeItem('hlk_user');
   showLogin();
