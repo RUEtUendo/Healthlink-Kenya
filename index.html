@@ -555,7 +555,7 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 
   <div class="tbar-r">
 
-    <span class="pill p-api">⬤ API Live</span>
+
 
     <span class="pill p-hi" id="kpi-hi-top">— High Risk</span>
 
@@ -863,22 +863,12 @@ const FAC_COLORS={"District Hospital":"#7eb8f7","Sub-District Hospital":"#93c5fd
 
   <div class="set-section"><div class="set-title">Coverage Area</div>
 
-    <div class="fg"><label class="fl">County</label><input class="fci" id="set-county" value="Nakuru"></div>
+    <div class="fg"><label class="fl">County</label>
+      <select class="fci" id="set-county" onchange="updateSubcounties()"></select>
+    </div>
 
     <div class="fg"><label class="fl">Sub-counties (active)</label>
-      <div id="set-subcounties" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-        <label class="sc-check"><input type="checkbox" value="Nakuru Town" checked> Nakuru Town</label>
-        <label class="sc-check"><input type="checkbox" value="Rongai" checked> Rongai</label>
-        <label class="sc-check"><input type="checkbox" value="Subukia" checked> Subukia</label>
-        <label class="sc-check"><input type="checkbox" value="Molo" checked> Molo</label>
-        <label class="sc-check"><input type="checkbox" value="Naivasha" checked> Naivasha</label>
-        <label class="sc-check"><input type="checkbox" value="Gilgil" checked> Gilgil</label>
-        <label class="sc-check"><input type="checkbox" value="Bahati" checked> Bahati</label>
-        <label class="sc-check"><input type="checkbox" value="Njoro" checked> Njoro</label>
-        <label class="sc-check"><input type="checkbox" value="Kuresoi North" checked> Kuresoi North</label>
-        <label class="sc-check"><input type="checkbox" value="Kuresoi South" checked> Kuresoi South</label>
-        <label class="sc-check"><input type="checkbox" value="Nakuru East" checked> Nakuru East</label>
-      </div>
+      <div id="set-subcounties" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
     </div>
 
     <div class="fg"><label class="fl">Distance threshold (km) — <span id="thresh-val">35</span> km</label>
