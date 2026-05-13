@@ -1434,13 +1434,25 @@ function renderMC(){
 
   const vtype=document.getElementById('mc-vtype').value;
 
-  const data=[...PATIENTS].filter(p=>
+  const cond=document.getElementById('mc-condition').value;
 
-    (!q||p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))&&
+  const ftype=document.getElementById('mc-ftype').value;
 
-    (!risk||p.risk===risk)&&(!vtype||p.visit_type===vtype)
+  const data=[...PATIENTS].filter(p=>{
 
-  ).sort((a,b)=>{const o={High:0,Medium:1,Low:2};return o[a.risk]-o[b.risk]});
+    if(q && !p.name.toLowerCase().includes(q) && !p.id.toLowerCase().includes(q)) return false;
+
+    if(risk && p.risk!==risk) return false;
+
+    if(vtype && p.visit_type!==vtype) return false;
+
+    if(cond && p.condition!==cond) return false;
+
+    if(ftype){const nf=nearestFac(p.lat,p.lng);if(!nf||nf.type!==ftype) return false;}
+
+    return true;
+
+  }).sort((a,b)=>{const o={High:0,Medium:1,Low:2};return o[a.risk]-o[b.risk]});
 
   document.getElementById('mc-count').textContent=`(${data.length})`;
 
